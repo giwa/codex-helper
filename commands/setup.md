@@ -1,49 +1,58 @@
 ---
-description: Configure claude-delegator MCP servers and install rules
+description: Configure claude-delegator MCP servers and install orchestration rules
 allowed-tools: Bash, Read, Write, Edit, AskUserQuestion
 ---
 
 # Setup
 
-This command configures MCP servers and installs orchestration rules.
+Configure MCP servers and install orchestration rules for claude-delegator.
 
-## Step 1: Check Prerequisites
+## Step 1: Detect Prerequisites
 
-### Check Bun
-```bash
-which bun 2>/dev/null && bun --version
-```
-
-**If not found**: Tell user to install: `curl -fsSL https://bun.sh/install | bash`
-
-### Check Codex CLI
-```bash
-which codex 2>/dev/null && codex --version 2>&1 | head -3
-```
-
-**If not found**: `npm install -g @openai/codex`
-
-### Check Gemini CLI
-```bash
-which gemini 2>/dev/null && gemini --version 2>&1 | head -3
-```
-
-**If not found**: `npm install -g @google/gemini-cli`
-
-## Step 2: Install Gemini MCP Server Dependencies
+Run these checks in parallel:
 
 ```bash
-cd ${CLAUDE_PLUGIN_ROOT}/servers/gemini-mcp && bun install
+# Check Bun
+which bun 2>/dev/null && echo "BUN_VERSION=$(bun --version)" || echo "BUN_MISSING"
 ```
 
-## Step 3: Configure MCP Servers
+```bash
+# Check Codex CLI
+which codex 2>/dev/null && echo "CODEX_VERSION=$(codex --version 2>&1 | head -1)" || echo "CODEX_MISSING"
+```
 
-Read the user's current settings:
+```bash
+# Check Gemini CLI
+which gemini 2>/dev/null && echo "GEMINI_VERSION=$(gemini --version 2>&1 | head -1)" || echo "GEMINI_MISSING"
+```
+
+### If Missing
+
+| Missing | Action |
+|---------|--------|
+| Bun | Tell user: `curl -fsSL https://bun.sh/install \| bash` then restart terminal |
+| Codex | Tell user: `npm install -g @openai/codex` |
+| Gemini | Tell user: `npm install -g @google/gemini-cli` |
+
+**If Bun is missing, STOP here.** The MCP server requires Bun.
+
+## Step 2: Install Gemini MCP Dependencies
+
+```bash
+cd ${CLAUDE_PLUGIN_ROOT}/servers/gemini-mcp && bun install 2>&1
+```
+
+If this fails, report the error and stop.
+
+## Step 3: Read Current Settings
+
 ```bash
 cat ~/.claude/settings.json 2>/dev/null || echo "{}"
 ```
 
-Add the MCP server configurations to `~/.claude/settings.json`:
+## Step 4: Configure MCP Servers
+
+Merge the following into `~/.claude/settings.json`:
 
 ```json
 {
@@ -62,82 +71,73 @@ Add the MCP server configurations to `~/.claude/settings.json`:
 }
 ```
 
-Replace `${CLAUDE_PLUGIN_ROOT}` with the actual plugin path.
+**CRITICAL**:
+- Replace `${CLAUDE_PLUGIN_ROOT}` with the actual absolute path
+- Merge with existing settings, don't overwrite
+- Preserve any existing `mcpServers` entries
 
-**IMPORTANT**: Merge with existing settings, don't overwrite.
-
-## Step 4: Install Rules
-
-Copy orchestration rules to `~/.claude/rules/delegator/`:
+## Step 5: Install Orchestration Rules
 
 ```bash
-mkdir -p ~/.claude/rules/delegator
-cp ${CLAUDE_PLUGIN_ROOT}/rules/*.md ~/.claude/rules/delegator/
+mkdir -p ~/.claude/rules/delegator && cp ${CLAUDE_PLUGIN_ROOT}/rules/*.md ~/.claude/rules/delegator/
 ```
 
-## Step 5: Verify Installation
+## Step 6: Verify Installation
 
-### Test Codex MCP
 ```bash
-codex mcp-server --help 2>&1 | head -3
+# Count installed rules
+ls ~/.claude/rules/delegator/*.md 2>/dev/null | wc -l
 ```
 
-### Test Gemini MCP
-```bash
-bun run ${CLAUDE_PLUGIN_ROOT}/servers/gemini-mcp/src/index.ts --help 2>&1 | head -3
-```
+Should return 4 (orchestration.md, triggers.md, model-selection.md, delegation-format.md).
 
-## Step 6: Report Status
+## Step 7: Report Status
 
-Present a summary:
+Display this summary:
 
 ```
-┌─────────────────────────────────────────────┐
-│         claude-delegator Setup              │
-├─────────────────────────────────────────────┤
-│ Bun:          [✓ Installed / ✗ Missing]     │
-│ Codex CLI:    [✓ Installed / ✗ Missing]     │
-│ Gemini CLI:   [✓ Installed / ✗ Missing]     │
-│ MCP Config:   [✓ Configured / ✗ Missing]    │
-│ Rules:        [✓ Installed / ✗ Missing]     │
-└─────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────┐
+│            claude-delegator Setup                 │
+├──────────────────────────────────────────────────┤
+│                                                   │
+│  Prerequisites                                    │
+│  ├─ Bun:        [✓ v1.x.x / ✗ Missing]           │
+│  ├─ Codex CLI:  [✓ Installed / ✗ Missing]        │
+│  └─ Gemini CLI: [✓ Installed / ✗ Missing]        │
+│                                                   │
+│  Installation                                     │
+│  ├─ MCP Config:   ~/.claude/settings.json        │
+│  └─ Rules:        ~/.claude/rules/delegator/     │
+│                                                   │
+│  Status: [Ready / Partial - see issues above]    │
+│                                                   │
+└──────────────────────────────────────────────────┘
 ```
 
-## Step 7: Interactive Customization
+## Step 8: Provider Selection (Optional)
 
 Ask user:
 
-**Question**: "Would you like to customize which providers are enabled?"
+**Question**: "Which providers would you like enabled?"
 **Options**:
-- "Keep both Codex and Gemini (Recommended)"
-- "Enable Codex (GPT) only"
-- "Enable Gemini only"
-- "Configure custom provider"
+- "Both Codex (GPT) and Gemini (Recommended)" - Keeps both
+- "Codex (GPT) only" - Remove Gemini from mcpServers
+- "Gemini only" - Remove Codex from mcpServers
 
-Based on selection, modify the MCP configuration accordingly.
+Modify `~/.claude/settings.json` based on selection.
 
-## Step 8: Test Connection
-
-**Question**: "Would you like to test the connections now?"
-**Options**:
-- "Yes, test both"
-- "Test Codex only"
-- "Test Gemini only"
-- "Skip testing"
-
-If testing:
-- For Codex: Make a simple MCP call and verify response
-- For Gemini: Make a simple MCP call and verify response
-
-## Success Message
+## Step 9: Final Instructions
 
 ```
-✓ claude-delegator configured successfully!
+Setup complete!
 
-MCP servers added to ~/.claude/settings.json
-Rules installed to ~/.claude/rules/delegator/
+Next steps:
+1. Restart Claude Code to load MCP servers
+2. Authenticate providers:
+   - Codex: Run `codex login` in terminal
+   - Gemini: Set GOOGLE_API_KEY or run `gcloud auth application-default login`
 
-You may need to restart Claude Code for MCP changes to take effect.
+Test with: "Ask GPT about best practices for error handling"
 
 Use `/claude-delegator:configure` to modify providers later.
 ```

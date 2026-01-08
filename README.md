@@ -1,205 +1,159 @@
 # claude-delegator
 
-Multi-model orchestration via MCP. External AI models (GPT, Gemini) as native Claude Code tool providers.
-
 ![MCP Tools](https://img.shields.io/badge/Integration-MCP%20Tools-blue)
 ![Providers](https://img.shields.io/badge/Providers-Codex%20%7C%20Gemini-green)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-## Overview
+External AI models as native Claude Code tools. GPT and Gemini become first-class MCP providers.
 
-**claude-delegator** makes external AI models feel native in Claude Code:
+---
 
-- **GPT** (via Codex) - Strategic reasoning, architecture, complex debugging
-- **Gemini** - Research, documentation, frontend, multimodal analysis
+## Install
 
-No wrapper agents. No background task hacks. Just native MCP tools that Claude can call directly.
+Inside a Claude Code instance, run the following commands:
 
+**Step 1: Add the marketplace**
 ```
-User: "Get GPT's opinion on this architecture"
-
-Claude: I'll consult GPT for analysis.
-        [Calls mcp__codex__codex({ prompt: "Analyze...", model: "gpt-5.2" })]
-
-GPT: The architecture has these concerns...
-
-Claude: Based on GPT's analysis, I recommend...
+/plugin marketplace add jarrodwatts/claude-delegator
 ```
 
-## Installation
-
-### Prerequisites
-
-```bash
-# Install CLIs
-npm install -g @openai/codex
-npm install -g @google/gemini-cli
-
-# Install Bun (for Gemini MCP server)
-curl -fsSL https://bun.sh/install | bash
-
-# Authenticate
-codex login
-# For Gemini: set GOOGLE_API_KEY or use gcloud auth
+**Step 2: Install the plugin**
+```
+/plugin install claude-delegator
 ```
 
-### Plugin Installation
-
-```bash
-# Clone the repo
-cd ~/.claude/plugins
-git clone https://github.com/jarrodwatts/claude-delegator
-cd claude-delegator
-
-# Install Gemini MCP server dependencies
-cd servers/gemini-mcp
-bun install
-cd ../..
-
-# Run setup (configures MCP servers and installs rules)
-# In Claude Code:
+**Step 3: Run setup**
+```
 /claude-delegator:setup
 ```
 
-## Quick Start
+Done! Claude now has access to GPT and Gemini as native tools.
 
-Once installed, Claude automatically knows when to delegate:
+> **Note**: You'll need the CLI tools installed. The setup command will check and guide you.
 
-```
-# Research (→ Gemini)
-"How do I implement optimistic updates in React Query v5?"
+---
 
-# Architecture review (→ GPT)
-"Review this database schema for potential issues"
+## What is claude-delegator?
 
-# Explicit delegation
-"Ask GPT about the security implications of this auth flow"
-```
+Claude Code gains autonomous access to external AI models via MCP. No wrapper agents, no background task hacks—just native tool calls.
 
-## Available Tools
-
-| Tool | Provider | Use For |
-|------|----------|---------|
-| `mcp__codex__codex` | GPT | Architecture, debugging, code review |
-| `mcp__codex__codex-reply` | GPT | Continue GPT conversation |
-| `mcp__gemini__gemini` | Gemini | Research, docs, frontend, multimodal |
-| `mcp__gemini__gemini-reply` | Gemini | Continue Gemini conversation |
-
-## When to Use Each Model
-
-### GPT (Codex)
-- Complex architecture decisions
-- After 2+ failed debugging attempts
-- Security/performance analysis
-- Code review requiring deep reasoning
-
-### Gemini
-- Library/framework research
-- Documentation writing
-- Frontend/UI code generation
-- Multimodal analysis (images, PDFs)
-- Quick best practices lookup
-
-## Commands
-
-| Command | Description |
+| Feature | What It Does |
 |---------|-------------|
-| `/claude-delegator:setup` | Configure MCP servers and install rules |
-| `/claude-delegator:configure` | Add/remove/customize providers |
+| **Native MCP Tools** | `mcp__codex__codex` and `mcp__gemini__gemini` appear as regular tools |
+| **Autonomous Delegation** | Claude decides when to consult GPT or Gemini based on task type |
+| **Role Prompts** | Auto-injected system prompts shape model behavior (oracle, librarian, etc.) |
+| **Conversation Memory** | Continue multi-turn conversations with `-reply` tools |
+| **Response Synthesis** | Claude interprets and evaluates external responses, never raw passthrough |
+
+### When Each Model Gets Used
+
+| Model | Triggered By | Example Tasks |
+|-------|--------------|---------------|
+| **GPT (Codex)** | Architecture, security, debugging failures | "Review this auth flow", "Why does this keep failing?" |
+| **Gemini** | Research, docs, frontend, multimodal | "How do I use React Query v5?", "Generate a dashboard component" |
+
+---
 
 ## How It Works
 
-### Architecture
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Claude Code                               │
+│                                                                  │
+│   User: "How should I structure this caching layer?"            │
+│                                                                  │
+│   Claude: [Detects architecture question]                        │
+│           [Calls mcp__codex__codex with oracle role]            │
+│                                                                  │
+│           ┌──────────────────────────────────────┐              │
+│           │  MCP Server: codex                   │              │
+│           │  → codex mcp-server (native)         │              │
+│           │  → Returns GPT analysis              │              │
+│           └──────────────────────────────────────┘              │
+│                                                                  │
+│   Claude: "Based on GPT's analysis, I recommend..."             │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Plugin Structure
 
 ```
 claude-delegator/
 ├── servers/
-│   └── gemini-mcp/           # MCP server for Gemini CLI
-├── rules/                    # Installs to ~/.claude/rules/delegator/
-│   ├── orchestration.md      # Main delegation logic
-│   ├── triggers.md           # When to delegate
-│   ├── model-selection.md    # Which model for what
-│   └── delegation-format.md  # Prompt templates
-├── prompts/                  # Auto-injected system prompts
-│   ├── oracle.md             # GPT: strategic advisor
-│   ├── librarian.md          # Gemini: research
-│   ├── frontend-engineer.md  # Gemini: UI/UX
-│   └── explore.md            # Gemini: codebase search
-├── config/
-│   └── providers.json        # Provider registry
+│   └── gemini-mcp/           # MCP wrapper for Gemini CLI
+│       └── src/index.ts      # Spawns gemini CLI, handles I/O
+├── rules/                    # Installed to ~/.claude/rules/delegator/
+│   ├── orchestration.md      # When to delegate
+│   ├── triggers.md           # Explicit + semantic triggers
+│   ├── model-selection.md    # GPT vs Gemini decision matrix
+│   └── delegation-format.md  # 7-section prompt structure
+├── prompts/                  # Auto-injected based on role parameter
+│   ├── oracle.md             # Strategic advisor (GPT)
+│   ├── librarian.md          # Research specialist (Gemini)
+│   ├── frontend-engineer.md  # UI/UX code generation (Gemini)
+│   └── explore.md            # Codebase navigation (Gemini)
 ├── commands/
-│   ├── setup.md              # Initial configuration
-│   └── configure.md          # Provider management
-└── CLAUDE.md                 # Plugin overview
+│   ├── setup.md              # /claude-delegator:setup
+│   └── configure.md          # /claude-delegator:configure
+└── config/
+    └── providers.json        # Provider registry
 ```
 
 ### MCP Integration
 
-Codex already has `codex mcp-server` built-in. For Gemini, we provide a thin MCP wrapper (~200 lines) that:
+**Codex (GPT)**: Uses the native `codex mcp-server` command—no wrapper needed.
 
-1. Spawns `gemini` CLI as a child process
-2. Captures output with smart error handling
-3. Supports conversation continuation via `--resume`
-4. Auto-injects role prompts based on task type
+**Gemini**: Requires our wrapper (`servers/gemini-mcp/`) because the Gemini CLI lacks native MCP support. The wrapper:
+- Spawns `gemini` CLI as child process via `Bun.spawn()`
+- Auto-injects role prompts based on `role` parameter
+- Tracks active processes for cleanup on shutdown
+- Uses `didTimeout` flag for accurate timeout detection
 
-### Orchestration Rules
-
-The plugin installs comprehensive rules to `~/.claude/rules/delegator/`:
-
-- **Autonomous delegation** - Claude decides when to delegate based on semantic intent
-- **Both explicit + semantic triggers** - "Ask GPT" works, so does asking about libraries
-- **7-section prompt format** - Structured delegation for consistent results
-- **Response synthesis** - Claude always interprets external model responses
-
-## Examples
-
-### Research with Gemini
-
-```typescript
-mcp__gemini__gemini({
-  prompt: "Best practices for React Query v5 optimistic updates",
-  role: "librarian",
-  model: "gemini-2.5-pro"
-})
-```
-
-### Architecture Review with GPT
-
-```typescript
-mcp__codex__codex({
-  prompt: "Review this caching architecture for potential issues",
-  model: "gpt-5.2",
-  "approval-policy": "on-request"
-})
-```
-
-### Parallel Consultation
-
-For critical decisions, Claude can consult both models:
-
-```typescript
-// Claude calls both in parallel for important decisions
-mcp__codex__codex({ prompt: "Analyze tradeoffs..." })
-mcp__gemini__gemini({ prompt: "Research implementation patterns...", role: "librarian" })
-
-// Then synthesizes both perspectives
-```
-
-### Conversation Continuation
-
-```typescript
-// First call
-mcp__codex__codex({ prompt: "Design a caching strategy..." })
-// Returns conversationId
-
-// Follow-up
-mcp__codex__codex-reply({
-  conversationId: "abc123",
-  prompt: "What about cache invalidation?"
-})
-```
+---
 
 ## Configuration
+
+### Available Tools
+
+| Tool | Provider | Description |
+|------|----------|-------------|
+| `mcp__codex__codex` | GPT | Start a new conversation with GPT |
+| `mcp__codex__codex-reply` | GPT | Continue an existing GPT conversation |
+| `mcp__gemini__gemini` | Gemini | Start a new conversation with Gemini |
+| `mcp__gemini__gemini-reply` | Gemini | Continue an existing Gemini conversation |
+
+### Role Prompts
+
+Pass `role` to shape model behavior:
+
+| Role | Model | Behavior |
+|------|-------|----------|
+| `oracle` | GPT | Strategic advisor—architecture, security, complex debugging |
+| `librarian` | Gemini | Research specialist—docs, best practices, library usage |
+| `frontend-engineer` | Gemini | UI/UX code generation—components, styling, interactions |
+| `explore` | Gemini | Codebase navigation—finding patterns, understanding structure |
+
+### Example Calls
+
+```typescript
+// Research with Gemini
+mcp__gemini__gemini({
+  prompt: "Best practices for React Query v5 optimistic updates",
+  role: "librarian"
+})
+
+// Architecture review with GPT
+mcp__codex__codex({
+  prompt: "Review this caching architecture for race conditions",
+  model: "gpt-5.2"
+})
+
+// Continue a conversation
+mcp__codex__codex-reply({
+  conversationId: "abc123",
+  prompt: "What about cache invalidation strategies?"
+})
+```
 
 ### Manual MCP Setup
 
@@ -222,66 +176,95 @@ If `/setup` doesn't work, manually add to `~/.claude/settings.json`:
 }
 ```
 
-### Role Prompts
+Replace `/path/to/claude-delegator` with the actual plugin location.
 
-Customize behavior by editing files in `prompts/`:
+---
 
-| Role | File | Behavior |
-|------|------|----------|
-| oracle | `prompts/oracle.md` | Strategic advisor for GPT |
-| librarian | `prompts/librarian.md` | Research specialist for Gemini |
-| frontend-engineer | `prompts/frontend-engineer.md` | UI/UX code generator |
-| explore | `prompts/explore.md` | Codebase navigator |
+## Requirements
 
-## Adding Custom Providers
+| Dependency | Version | Installation |
+|------------|---------|--------------|
+| Bun | >= 1.0 | `curl -fsSL https://bun.sh/install \| bash` |
+| Codex CLI | Latest | `npm install -g @openai/codex` |
+| Gemini CLI | Latest | `npm install -g @google/gemini-cli` |
 
-Use `/claude-delegator:configure add custom` for interactive setup, or manually:
+### Authentication
 
-1. Check if CLI has native MCP server (like Codex)
+```bash
+# Codex (GPT)
+codex login
+
+# Gemini
+# Option 1: API key
+export GOOGLE_API_KEY=your-key
+
+# Option 2: gcloud auth
+gcloud auth application-default login
+```
+
+---
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `/claude-delegator:setup` | Configure MCP servers, install rules, verify prerequisites |
+| `/claude-delegator:configure` | Add, remove, or customize providers |
+
+---
+
+## Development
+
+### Setup
+
+```bash
+# Clone (if not using plugin marketplace)
+cd ~/.claude/plugins
+git clone https://github.com/jarrodwatts/claude-delegator
+cd claude-delegator
+
+# Install Gemini MCP server dependencies
+cd servers/gemini-mcp && bun install
+```
+
+### Running the MCP Server Locally
+
+```bash
+cd servers/gemini-mcp
+bun run src/index.ts
+```
+
+No build step—Bun runs TypeScript directly.
+
+### Testing
+
+Manual testing only (no automated test suite):
+
+1. Ensure `gemini` CLI is installed and authenticated
+2. Run the MCP server
+3. Send MCP tool calls via stdio
+
+### Adding a New Provider
+
+1. Check if the CLI has native MCP support (like Codex)
 2. If not, create a wrapper in `servers/your-provider-mcp/`
-3. Add to `~/.claude/settings.json`
+3. Add configuration to `config/providers.json`
 4. Optionally add role prompts to `prompts/`
+
+---
 
 ## Troubleshooting
 
-### "MCP server not found"
+| Issue | Solution |
+|-------|----------|
+| MCP server not found | Restart Claude Code after modifying `~/.claude/settings.json` |
+| Codex not authenticated | Run `codex login` |
+| Gemini timeout | Increase timeout: `mcp__gemini__gemini({ timeout: 900000 })` (15 min) |
+| Command not found: bun | Install Bun: `curl -fsSL https://bun.sh/install \| bash` |
+| Gemini auth failed | Set `GOOGLE_API_KEY` or run `gcloud auth application-default login` |
 
-Restart Claude Code after modifying `~/.claude/settings.json`.
-
-### "Codex not authenticated"
-
-Run `codex login` and try again.
-
-### "Gemini timeout"
-
-Default timeout is 10 minutes. For longer tasks, use the `timeout` parameter:
-
-```typescript
-mcp__gemini__gemini({
-  prompt: "...",
-  timeout: 900000  // 15 minutes
-})
-```
-
-### "Command not found: bun"
-
-Install Bun: `curl -fsSL https://bun.sh/install | bash`
-
-## Contributing
-
-Contributions welcome! Areas of interest:
-
-- New provider integrations (Ollama, Mistral, etc.)
-- Improved role prompts
-- Better error handling
-- Documentation improvements
+---
 
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
-
-## Credits
-
-- Inspired by [oh-my-opencode](https://github.com/code-yeongyu/oh-my-opencode) orchestration patterns
-- Built for [Claude Code](https://claude.com/claude-code)
-- Uses [Model Context Protocol](https://github.com/modelcontextprotocol) for native integration
