@@ -12,6 +12,17 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 export const DEFAULT_TIMEOUT = 10 * 60 * 1000; // 10 minutes
 export const PROMPTS_DIR = join(__dirname, "../../prompts");
+export const VALID_ROLES = ["oracle", "librarian", "frontend-engineer", "explore"] as const;
+export type ValidRole = (typeof VALID_ROLES)[number];
+
+export type LogLevel = "debug" | "info" | "warn" | "error";
+export type Logger = (level: LogLevel, message: string, meta?: Record<string, unknown>) => void;
+
+export const defaultLogger: Logger = (level, message, meta) => {
+  const timestamp = new Date().toISOString();
+  const metaStr = meta ? ` ${JSON.stringify(meta)}` : "";
+  console.error(`[${timestamp}] [${level.toUpperCase()}] ${message}${metaStr}`);
+};
 
 export const TOOLS = [
   {
@@ -73,6 +84,15 @@ export const TOOLS = [
       required: ["sessionIndex", "prompt"],
     },
   },
+  {
+    name: "gemini-health",
+    description: "Check if the Gemini MCP server is running and healthy",
+    inputSchema: {
+      type: "object" as const,
+      properties: {},
+      required: [] as string[],
+    },
+  },
 ];
 
 export function loadRolePrompt(
@@ -86,9 +106,14 @@ export function loadRolePrompt(
   return null;
 }
 
+export function isValidRole(role: string): role is ValidRole {
+  return VALID_ROLES.includes(role as ValidRole);
+}
+
 export function buildArgs(
   args: Record<string, unknown>,
-  promptsDir: string = PROMPTS_DIR
+  promptsDir: string = PROMPTS_DIR,
+  logger: (msg: string) => void = console.error
 ): string[] {
   const cliArgs: string[] = [];
 
@@ -100,9 +125,16 @@ export function buildArgs(
 
   let prompt = args.prompt as string;
   if (args.role) {
-    const rolePrompt = loadRolePrompt(args.role as string, promptsDir);
-    if (rolePrompt) {
-      prompt = `${rolePrompt}\n\n---\n\nTask:\n${prompt}`;
+    const role = args.role as string;
+    if (!isValidRole(role)) {
+      logger(
+        `Warning: Invalid role "${role}". Valid roles: ${VALID_ROLES.join(", ")}. Proceeding without role prompt.`
+      );
+    } else {
+      const rolePrompt = loadRolePrompt(role, promptsDir);
+      if (rolePrompt) {
+        prompt = `${rolePrompt}\n\n---\n\nTask:\n${prompt}`;
+      }
     }
   }
 
@@ -124,10 +156,13 @@ export async function runGemini(
   args: string[],
   timeout: number,
   spawnFn: SpawnFn = spawn,
-  processes: Set<ChildProcess> = activeProcesses
+  processes: Set<ChildProcess> = activeProcesses,
+  logger: Logger = defaultLogger
 ): Promise<GeminiResult> {
   const startTime = Date.now();
   let didTimeout = false;
+
+  logger("debug", "Starting Gemini process", { timeout, argsCount: args.length });
 
   const proc = spawnFn("gemini", args, {
     stdio: ["ignore", "pipe", "pipe"],
@@ -137,6 +172,7 @@ export async function runGemini(
 
   const timeoutId = setTimeout(() => {
     didTimeout = true;
+    logger("warn", "Gemini process timed out, killing", { timeout });
     proc.kill();
   }, timeout);
 
@@ -160,6 +196,7 @@ export async function runGemini(
     const durationMs = Date.now() - startTime;
 
     if (didTimeout) {
+      logger("error", "Gemini timed out", { timeout, durationMs });
       throw new Error(
         `Gemini timed out after ${timeout}ms` +
           (stdout ? `\nPartial output: ${stdout}` : "")
@@ -167,6 +204,7 @@ export async function runGemini(
     }
 
     if (exitCode !== 0) {
+      logger("error", "Gemini failed", { exitCode, durationMs, stderr: stderr.slice(0, 200) });
       throw new Error(
         `Gemini failed (exit code ${exitCode})` +
           (stderr ? `\nStderr: ${stderr}` : "") +
@@ -174,6 +212,7 @@ export async function runGemini(
       );
     }
 
+    logger("info", "Gemini completed successfully", { durationMs, outputLength: stdout.length });
     return { output: stdout, exitCode, durationMs };
   } catch (error) {
     clearTimeout(timeoutId);
@@ -243,6 +282,20 @@ export async function callToolHandler(
         DEFAULT_TIMEOUT
       );
       return { content: [{ type: "text", text: result.output }] };
+    }
+
+    if (name === "gemini-health") {
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            status: "healthy",
+            version: "1.0.0",
+            uptime: process.uptime(),
+            activeProcesses: activeProcesses.size,
+          }),
+        }],
+      };
     }
 
     return {

@@ -104,10 +104,10 @@ claude-delegator/
 **Codex (GPT)**: Uses the native `codex mcp-server` command—no wrapper needed.
 
 **Gemini**: Requires our wrapper (`servers/gemini-mcp/`) because the Gemini CLI lacks native MCP support. The wrapper:
-- Spawns `gemini` CLI as child process via `Bun.spawn()`
+- Spawns `gemini` CLI as child process via Node.js `child_process.spawn()`
 - Auto-injects role prompts based on `role` parameter
 - Tracks active processes for cleanup on shutdown
-- Uses `didTimeout` flag for accurate timeout detection
+- Works with npm, yarn, or bun
 
 ---
 
@@ -159,6 +159,25 @@ mcp__codex__codex-reply({
 
 If `/setup` doesn't work, manually add to `~/.claude/settings.json`:
 
+**Using npm/yarn (recommended):**
+```json
+{
+  "mcpServers": {
+    "codex": {
+      "type": "stdio",
+      "command": "codex",
+      "args": ["mcp-server"]
+    },
+    "gemini": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["tsx", "/path/to/claude-delegator/servers/gemini-mcp/src/index.ts"]
+    }
+  }
+}
+```
+
+**Using bun:**
 ```json
 {
   "mcpServers": {
@@ -184,9 +203,11 @@ Replace `/path/to/claude-delegator` with the actual plugin location.
 
 | Dependency | Version | Installation |
 |------------|---------|--------------|
-| Bun | >= 1.0 | `curl -fsSL https://bun.sh/install \| bash` |
+| Node.js | >= 18 | https://nodejs.org (includes npm) |
 | Codex CLI | Latest | `npm install -g @openai/codex` |
 | Gemini CLI | Latest | `npm install -g @google/gemini-cli` |
+
+> **Note**: Bun and yarn also work as alternatives to npm. The setup command auto-detects your package manager.
 
 ### Authentication
 
@@ -224,22 +245,32 @@ git clone https://github.com/jarrodwatts/claude-delegator
 cd claude-delegator
 
 # Install Gemini MCP server dependencies
-cd servers/gemini-mcp && bun install
+cd servers/gemini-mcp && npm install  # or bun/yarn
 ```
 
 ### Running the MCP Server Locally
 
 ```bash
 cd servers/gemini-mcp
+
+# Using npm
+npx tsx src/index.ts
+
+# Using bun
 bun run src/index.ts
 ```
 
-No build step—Bun runs TypeScript directly.
+No build step—TypeScript runs directly via tsx or Bun.
 
 ### Testing
 
-Manual testing only (no automated test suite):
+```bash
+cd servers/gemini-mcp
+npm test                 # Run all tests
+npm run test:coverage    # Run with coverage
+```
 
+Manual testing:
 1. Ensure `gemini` CLI is installed and authenticated
 2. Run the MCP server
 3. Send MCP tool calls via stdio
@@ -260,8 +291,9 @@ Manual testing only (no automated test suite):
 | MCP server not found | Restart Claude Code after modifying `~/.claude/settings.json` |
 | Codex not authenticated | Run `codex login` |
 | Gemini timeout | Increase timeout: `mcp__gemini__gemini({ timeout: 900000 })` (15 min) |
-| Command not found: bun | Install Bun: `curl -fsSL https://bun.sh/install \| bash` |
+| Invalid role warning | Use valid roles: `oracle`, `librarian`, `frontend-engineer`, `explore` |
 | Gemini auth failed | Set `GOOGLE_API_KEY` or run `gcloud auth application-default login` |
+| No package manager | Install Node.js from https://nodejs.org (includes npm) |
 
 ---
 

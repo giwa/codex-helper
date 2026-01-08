@@ -12,12 +12,12 @@
     "test:coverage": "npx vitest run --coverage"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
-    "tsx": "^4.7.0"
+    "@modelcontextprotocol/sdk": "1.25.2",
+    "tsx": "4.21.0"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "@vitest/coverage-v8": "^2.1.9",
-    "vitest": "^2.1.9"
+    "@types/node": "20.19.27",
+    "@vitest/coverage-v8": "2.1.9",
+    "vitest": "2.1.9"
   }
 }

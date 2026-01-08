@@ -22,8 +22,14 @@
       "auth": "Set GOOGLE_API_KEY or run 'gcloud auth application-default login'",
       "mcp": {
         "type": "stdio",
-        "command": "bun",
-        "args": ["run", "${PLUGIN_ROOT}/servers/gemini-mcp/src/index.ts"]
+        "command": "npx",
+        "args": ["tsx", "${PLUGIN_ROOT}/servers/gemini-mcp/src/index.ts"],
+        "alternatives": {
+          "bun": {
+            "command": "bun",
+            "args": ["run", "${PLUGIN_ROOT}/servers/gemini-mcp/src/index.ts"]
+          }
+        }
       },
       "roles": ["librarian", "frontend-engineer", "explore"],
       "strengths": ["research", "documentation", "frontend", "multimodal"]
