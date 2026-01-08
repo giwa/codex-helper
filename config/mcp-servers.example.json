@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "codex": {
+      "type": "stdio",
+      "command": "codex",
+      "args": ["mcp-server"]
+    },
+    "gemini": {
+      "type": "stdio",
+      "command": "bun",
+      "args": ["run", "/path/to/claude-delegator/servers/gemini-mcp/src/index.ts"]
+    }
+  }
+}

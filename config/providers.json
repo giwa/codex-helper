@@ -1,0 +1,57 @@
+{
+  "providers": {
+    "codex": {
+      "name": "Codex (GPT)",
+      "description": "OpenAI GPT models via Codex CLI",
+      "cli": "codex",
+      "install": "npm install -g @openai/codex",
+      "auth": "codex login",
+      "mcp": {
+        "type": "stdio",
+        "command": "codex",
+        "args": ["mcp-server"]
+      },
+      "roles": ["oracle"],
+      "strengths": ["architecture", "debugging", "code-review", "security"]
+    },
+    "gemini": {
+      "name": "Gemini",
+      "description": "Google Gemini models via Gemini CLI",
+      "cli": "gemini",
+      "install": "npm install -g @google/gemini-cli",
+      "auth": "Set GOOGLE_API_KEY or run 'gcloud auth application-default login'",
+      "mcp": {
+        "type": "stdio",
+        "command": "bun",
+        "args": ["run", "${PLUGIN_ROOT}/servers/gemini-mcp/src/index.ts"]
+      },
+      "roles": ["librarian", "frontend-engineer", "explore"],
+      "strengths": ["research", "documentation", "frontend", "multimodal"]
+    },
+    "ollama": {
+      "name": "Ollama (Local)",
+      "description": "Local models via Ollama",
+      "cli": "ollama",
+      "install": "https://ollama.ai/download",
+      "auth": null,
+      "mcp": {
+        "type": "stdio",
+        "command": "bun",
+        "args": ["run", "${PLUGIN_ROOT}/servers/generic-mcp/src/index.ts", "--cli", "ollama"]
+      },
+      "roles": [],
+      "strengths": ["offline", "privacy", "experimentation"],
+      "status": "coming-soon"
+    }
+  },
+  "defaults": {
+    "architecture": "codex",
+    "debugging": "codex",
+    "code-review": "codex",
+    "security": "codex",
+    "research": "gemini",
+    "documentation": "gemini",
+    "frontend": "gemini",
+    "multimodal": "gemini"
+  }
+}
