@@ -11,11 +11,10 @@ Contributions welcome. This document covers how to contribute effectively.
 git clone https://github.com/jarrodwatts/claude-delegator
 cd claude-delegator
 
-# Install dependencies
-cd servers/gemini-mcp && bun install && cd ../..
+# Install plugin in Claude Code
+/claude-delegator:setup
 
-# Test your changes
-bun run servers/gemini-mcp/src/index.ts
+# Test your changes by invoking the oracle
 ```
 
 ---
@@ -27,7 +26,7 @@ bun run servers/gemini-mcp/src/index.ts
 | **New Providers** | Ollama, Mistral, local model integrations |
 | **Role Prompts** | New roles for `prompts/`, improved existing prompts |
 | **Rules** | Better delegation triggers, model selection logic |
-| **Bug Fixes** | MCP server issues, timeout handling, error messages |
+| **Bug Fixes** | Command issues, error messages |
 | **Documentation** | README improvements, examples, troubleshooting |
 
 ---
@@ -36,10 +35,11 @@ bun run servers/gemini-mcp/src/index.ts
 
 ```
 claude-delegator/
-├── servers/gemini-mcp/     # MCP server (edit this for server changes)
-├── rules/                  # Orchestration logic (installed to ~/.claude/rules/)
-├── prompts/                # Role prompts (auto-injected by server)
+├── .claude-plugin/         # Plugin manifest
+│   └── plugin.json
 ├── commands/               # Slash commands (/setup, /configure)
+├── rules/                  # Orchestration logic (installed to ~/.claude/rules/)
+├── prompts/                # Role prompts (oracle, momus)
 ├── config/                 # Provider registry
 ├── CLAUDE.md               # Development guidance for Claude Code
 └── README.md               # User-facing docs
@@ -51,10 +51,9 @@ claude-delegator/
 
 ### Before Submitting
 
-1. **Test your changes** - Run the MCP server locally
-2. **Check TypeScript** - No `any` types, no `@ts-ignore`
-3. **Update docs** - If you change behavior, update relevant docs
-4. **Keep commits atomic** - One logical change per commit
+1. **Test your changes** - Run `/claude-delegator:setup` and verify
+2. **Update docs** - If you change behavior, update relevant docs
+3. **Keep commits atomic** - One logical change per commit
 
 ### PR Guidelines
 
@@ -77,7 +76,7 @@ Types: `feat`, `fix`, `docs`, `refactor`, `chore`
 
 Examples:
 - `feat: add Ollama provider support`
-- `fix: handle Gemini CLI timeout correctly`
+- `fix: handle Codex timeout correctly`
 - `docs: add troubleshooting for auth issues`
 
 ---
@@ -101,7 +100,7 @@ Examples:
      "your-provider": {
        "cli": "your-cli",
        "mcp": { ... },
-       "roles": ["oracle", "librarian"],
+       "roles": ["oracle"],
        "strengths": ["what it's good at"]
      }
    }
@@ -120,57 +119,32 @@ Examples:
 
 ## Code Style
 
-### TypeScript
-
-- No `any` without explicit justification
-- No `@ts-ignore` or `@ts-expect-error`
-- Use explicit return types on exported functions
-- Prefer `unknown` over `any` for truly unknown types
-
 ### Markdown (Rules/Prompts)
 
 - Use tables for structured data
 - Keep prompts concise and actionable
 - Test with actual Claude Code usage
 
-### General
+### TypeScript (if adding MCP servers)
 
-- No build step required - Bun runs TypeScript directly
-- Keep dependencies minimal
-- Prefer Bun APIs over Node.js equivalents
+- No `any` without explicit justification
+- No `@ts-ignore` or `@ts-expect-error`
+- Use explicit return types on exported functions
 
 ---
 
 ## Testing
 
-### Automated Tests
-
-The MCP server has comprehensive unit tests:
-
-```bash
-cd servers/gemini-mcp
-
-# Run tests
-npm test
-
-# Run with coverage
-npm run test:coverage
-```
-
-Coverage thresholds are configured at 95% for branches, functions, lines, and statements.
-
 ### Manual Testing
 
-After code changes, also verify with actual MCP calls:
+After changes, verify with actual MCP calls:
 
 1. Install the plugin in Claude Code
 2. Run `/claude-delegator:setup`
-3. Test MCP tool calls:
-   ```typescript
-   mcp__gemini__gemini({ prompt: "test", role: "librarian" })
-   ```
-4. Verify responses are properly formatted
-5. Test error cases (timeout, auth failure, missing CLI)
+3. Run `/claude-delegator:configure status` to verify installation
+4. Test MCP tool calls via oracle delegation
+5. Verify responses are properly synthesized
+6. Test error cases (timeout, missing CLI)
 
 ---
 
