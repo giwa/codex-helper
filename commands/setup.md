@@ -65,27 +65,38 @@ mkdir -p ~/.claude/rules/delegator && cp ${CLAUDE_PLUGIN_ROOT}/rules/*.md ~/.cla
 
 ## Step 5: Verify Installation
 
-```bash
-ls ~/.claude/rules/delegator/*.md 2>/dev/null | wc -l
-```
+Run these checks and report results:
 
-Should return rule files.
+```bash
+# Check 1: Codex CLI version
+codex --version 2>&1 | head -1
+
+# Check 2: MCP server configured
+cat ~/.claude/settings.json | jq -r '.mcpServers.codex.args | join(" ")' 2>/dev/null
+
+# Check 3: Rules installed (count files)
+ls ~/.claude/rules/delegator/*.md 2>/dev/null | wc -l
+
+# Check 4: Auth status (check if logged in)
+codex auth status 2>&1 | head -1 || echo "Run 'codex login' to authenticate"
+```
 
 ## Step 6: Report Status
 
+Display actual values from the checks above:
+
 ```
-┌──────────────────────────────────────────────────┐
-│            claude-delegator Setup                │
-├──────────────────────────────────────────────────┤
-│                                                  │
-│  Codex CLI:    [✓ Installed / ✗ Missing]        │
-│  MCP Config:   ~/.claude/settings.json          │
-│  Rules:        ~/.claude/rules/delegator/       │
-│                                                  │
-│  Status: Ready                                   │
-│                                                  │
-└──────────────────────────────────────────────────┘
+claude-delegator Status
+───────────────────────────────────────────────────
+Codex CLI:     ✓ [version from check 1]
+Model:         ✓ gpt-5.2-codex (or ✗ if not configured)
+MCP Config:    ✓ ~/.claude/settings.json (or ✗ if missing)
+Rules:         ✓ [N] files in ~/.claude/rules/delegator/
+Auth:          [status from check 4]
+───────────────────────────────────────────────────
 ```
+
+If any check fails, report the specific issue and how to fix it.
 
 ## Step 7: Final Instructions
 
