@@ -37,7 +37,7 @@ cd claude-delegator
 claude-delegator/
 ├── .claude-plugin/         # Plugin manifest
 │   └── plugin.json
-├── commands/               # Slash commands (/setup, /configure)
+├── commands/               # Slash commands (/setup, /uninstall)
 ├── rules/                  # Orchestration logic (installed to ~/.claude/rules/)
 ├── prompts/                # Role prompts (oracle, momus)
 ├── config/                 # Provider registry
@@ -141,7 +141,7 @@ After changes, verify with actual MCP calls:
 
 1. Install the plugin in Claude Code
 2. Run `/claude-delegator:setup`
-3. Run `/claude-delegator:configure status` to verify installation
+3. Verify MCP tools are available (`mcp__codex__codex`)
 4. Test MCP tool calls via oracle delegation
 5. Verify responses are properly synthesized
 6. Test error cases (timeout, missing CLI)

@@ -9,119 +9,88 @@ A Claude Code plugin that provides GPT (via Codex CLI) as specialized expert sub
 ## Development Commands
 
 ```bash
-# Test plugin installation
+# Test plugin locally (loads from working directory)
+claude --plugin-dir /path/to/claude-delegator
+
+# Run setup to test installation flow
 /claude-delegator:setup
 
-# Uninstall
-/claude-delegator:configure
+# Run uninstall to test removal flow
+/claude-delegator:uninstall
 ```
 
 No build step, no dependencies. Uses Codex CLI's native MCP server.
 
 ## Architecture
 
-### Expert Model
+### Orchestration Flow
 
-Claude acts as orchestrator—delegates to specialized GPT experts based on task type.
+Claude acts as orchestrator—delegates to specialized GPT experts based on task type. Delegation is **stateless**: each `mcp__codex__codex` call is independent (no memory between calls).
 
 ```
-User Request → Claude Code → [Identify expert needed]
+User Request → Claude Code → [Match trigger → Select expert]
                                     ↓
               ┌─────────────────────┼─────────────────────┐
               ↓                     ↓                     ↓
          Architect            Code Reviewer        Security Analyst
               ↓                     ↓                     ↓
-    [Advisory OR Implementation mode based on task]
+    [Advisory (read-only) OR Implementation (workspace-write)]
               ↓                     ↓                     ↓
-         Report to user ←──────────┴──────────────────────┘
+    Claude synthesizes response ←──┴──────────────────────┘
 ```
 
-### Five GPT Experts
+### How Delegation Works
 
-| Expert | Specialty | Best For |
-|--------|-----------|----------|
-| **Architect** | System design | Architecture, tradeoffs, complex debugging |
-| **Plan Reviewer** | Plan validation | Reviewing plans before execution |
-| **Scope Analyst** | Requirements | Catching ambiguities, pre-planning |
-| **Code Reviewer** | Code quality | Code review, finding bugs |
-| **Security Analyst** | Security | Vulnerabilities, threat modeling |
+1. **Match trigger** - Check `rules/triggers.md` for semantic patterns
+2. **Read expert prompt** - Load from `prompts/[expert].md`
+3. **Build 7-section prompt** - Use format from `rules/delegation-format.md`
+4. **Call `mcp__codex__codex`** - Pass expert prompt via `developer-instructions`
+5. **Synthesize response** - Never show raw output; interpret and verify
 
-### Operating Modes
+### The 7-Section Delegation Format
 
-Every expert can operate in two modes:
+Every delegation prompt must include: TASK, EXPECTED OUTCOME, CONTEXT, CONSTRAINTS, MUST DO, MUST NOT DO, OUTPUT FORMAT. See `rules/delegation-format.md` for templates.
 
-| Mode | Sandbox | Use When |
-|------|---------|----------|
-| **Advisory** | `read-only` | Analysis, recommendations, reviews |
-| **Implementation** | `workspace-write` | Making changes, fixing issues |
+### Retry Handling
 
-**Key principle**: The mode is determined by the task, not the expert.
+Since each call is stateless, retries must include full history:
+- Attempt 1 fails → new call with original task + error details
+- Up to 3 attempts → then escalate to user
 
 ### Component Relationships
 
-| Component | Location | Purpose |
-|-----------|----------|---------|
-| Rules | `rules/*.md` | Teaches when/how to delegate |
-| Prompts | `prompts/*.md` | Expert personality and behavior |
-| Commands | `commands/*.md` | `/setup`, `/configure` |
-| Config | `config/providers.json` | Provider configuration |
+| Component | Purpose | Notes |
+|-----------|---------|-------|
+| `rules/*.md` | When/how to delegate | Installed to `~/.claude/rules/delegator/` |
+| `prompts/*.md` | Expert personalities | Injected via `developer-instructions` |
+| `commands/*.md` | Slash commands | `/setup`, `/uninstall` |
+| `config/providers.json` | Provider metadata | Not used at runtime |
 
 > Expert prompts adapted from [oh-my-opencode](https://github.com/code-yeongyu/oh-my-opencode)
+
+## Five GPT Experts
+
+| Expert | Prompt | Specialty | Triggers |
+|--------|--------|-----------|----------|
+| **Architect** | `prompts/architect.md` | System design, tradeoffs | "how should I structure", "tradeoffs of", design questions |
+| **Plan Reviewer** | `prompts/plan-reviewer.md` | Plan validation | "review this plan", before significant work |
+| **Scope Analyst** | `prompts/scope-analyst.md` | Requirements analysis | "clarify the scope", vague requirements |
+| **Code Reviewer** | `prompts/code-reviewer.md` | Code quality, bugs | "review this code", "find issues" |
+| **Security Analyst** | `prompts/security-analyst.md` | Vulnerabilities | "is this secure", "harden this" |
+
+Every expert can operate in **advisory** (`sandbox: read-only`) or **implementation** (`sandbox: workspace-write`) mode based on the task.
 
 ## Key Design Decisions
 
 1. **Native MCP only** - Codex has `codex mcp-server`, no wrapper needed
-2. **Domain experts** - Each expert has distinct specialty and philosophy
+2. **Stateless calls** - Each delegation includes full context (Codex MCP doesn't expose session IDs to Claude Code)
 3. **Dual mode** - Any expert can advise or implement based on task
-4. **Verify then report** - Claude verifies implementation output before reporting
-5. **Retry with codex-reply** - Up to 3 attempts before escalating failures
+4. **Synthesize, don't passthrough** - Claude interprets GPT output, applies judgment
+5. **Proactive triggers** - Claude checks for delegation triggers on every message
 
-## When to Use Each Expert
+## When NOT to Delegate
 
-### Architect
-- "How should I structure this service?"
-- "What are the tradeoffs of Redis vs in-memory?"
-- "Design a notification system"
-- After 2+ failed fix attempts
-
-### Plan Reviewer
-- "Review this migration plan"
-- "Is this implementation plan complete?"
-- Before starting significant work
-
-### Scope Analyst
-- "What am I missing in these requirements?"
-- "Clarify the scope of this feature"
-- When requirements feel vague
-
-### Code Reviewer
-- "Review this PR"
-- "Find issues in this implementation"
-- After implementing features (self-review)
-
-### Security Analyst
-- "Is this authentication flow secure?"
-- "Threat model for this API"
-- "Harden this endpoint"
-
-## Plugin Structure
-
-```
-claude-delegator/
-├── commands/
-│   ├── setup.md              # /claude-delegator:setup
-│   └── configure.md          # /claude-delegator:configure
-├── rules/
-│   ├── orchestration.md      # Delegation flow
-│   ├── triggers.md           # When to use each expert
-│   ├── model-selection.md    # Expert details
-│   └── delegation-format.md  # Prompt templates
-├── prompts/
-│   ├── architect.md          # System design expert
-│   ├── plan-reviewer.md      # Plan validation expert
-│   ├── scope-analyst.md      # Requirements expert
-│   ├── code-reviewer.md      # Code quality expert
-│   └── security-analyst.md   # Security expert
-└── config/
-    └── providers.json
-```
+- Simple syntax questions (answer directly)
+- First attempt at any fix (try yourself first)
+- Trivial file operations
+- Research/documentation tasks

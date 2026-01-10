@@ -1,159 +1,111 @@
-# claude-delegator
+# Claude Delegator
 
-![MCP Tools](https://img.shields.io/badge/Integration-MCP%20Tools-blue)
-![Provider](https://img.shields.io/badge/Provider-Codex%20(GPT)-green)
-![License](https://img.shields.io/badge/License-MIT-yellow)
+GPT expert subagents for Claude Code. Five specialists that can analyze AND implement—architecture, security, code review, and more.
 
-GPT expert subagents for Claude Code via Codex CLI. Five specialized experts that can advise OR implement: architecture, code review, security, and more.
+[![License](https://img.shields.io/github/license/jarrodwatts/claude-delegator)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/jarrodwatts/claude-delegator)](https://github.com/jarrodwatts/claude-delegator/stargazers)
 
----
+![Claude Delegator in action](claude-delegator.png)
 
 ## Install
 
-Inside a Claude Code instance:
+Inside a Claude Code instance, run the following commands:
 
+**Step 1: Add the marketplace**
 ```
 /plugin marketplace add jarrodwatts/claude-delegator
+```
+
+**Step 2: Install the plugin**
+```
 /plugin install claude-delegator
+```
+
+**Step 3: Run setup**
+```
 /claude-delegator:setup
 ```
 
-Done! Claude now has access to GPT expert subagents.
+Done! Claude now routes complex tasks to GPT experts automatically.
 
-> **Note**: Requires Codex CLI. Setup will guide you through installation.
+> **Note**: Requires [Codex CLI](https://github.com/openai/codex). Setup guides you through installation.
 
 ---
 
-## What is claude-delegator?
+## What is Claude Delegator?
 
-Claude Code gains access to specialized GPT experts via native MCP tool calls. Each expert can analyze AND implement—not just advise.
+Claude gains a team of GPT specialists via native MCP. Each expert has a distinct specialty and can advise OR implement.
 
-| Feature | What It Does |
-|---------|-------------|
-| **Native MCP Tool** | `mcp__codex__codex` appears as a regular tool |
-| **5 Domain Experts** | Architect, Code Reviewer, Security Analyst, and more |
-| **Dual Mode** | Each expert can advise (read-only) or implement (write) |
-| **Response Synthesis** | Claude interprets GPT output, never raw passthrough |
+| What You Get | Why It Matters |
+|--------------|----------------|
+| **5 domain experts** | Right specialist for each problem type |
+| **Dual mode** | Experts can analyze (read-only) or implement (write) |
+| **Auto-routing** | Claude detects when to delegate based on your request |
+| **Synthesized responses** | Claude interprets GPT output, never raw passthrough |
 
-### GPT Experts
+### The Experts
 
-| Expert | Specialty | Example Use |
-|--------|-----------|-------------|
-| **Architect** | System design, tradeoffs | "Design a caching layer" |
-| **Plan Reviewer** | Plan validation | "Review this migration plan" |
-| **Scope Analyst** | Requirements analysis | "Clarify the scope of this feature" |
-| **Code Reviewer** | Code quality, bugs | "Review this PR for issues" |
-| **Security Analyst** | Vulnerabilities, threats | "Harden this authentication flow" |
+| Expert | What They Do | Example Triggers |
+|--------|--------------|------------------|
+| **Architect** | System design, tradeoffs, complex debugging | "How should I structure this?" / "What are the tradeoffs?" |
+| **Plan Reviewer** | Validate plans before you start | "Review this migration plan" / "Is this approach sound?" |
+| **Scope Analyst** | Catch ambiguities early | "What am I missing?" / "Clarify the scope" |
+| **Code Reviewer** | Find bugs, improve quality | "Review this PR" / "What's wrong with this?" |
+| **Security Analyst** | Vulnerabilities, threat modeling | "Is this secure?" / "Harden this endpoint" |
 
-### When to Use GPT Experts
+### When Experts Help Most
 
-| Use For | Example |
-|---------|---------|
-| Architecture decisions | "Review this database schema" |
-| Debugging escalation | After 2+ failed fix attempts |
-| Code review | "What am I missing in this auth flow?" |
-| Security analysis | "Threat model for this API" |
-| Requirements clarification | "What ambiguities exist in this spec?" |
+- **Architecture decisions** — "Should I use Redis or in-memory caching?"
+- **Stuck debugging** — After 2+ failed attempts, get a fresh perspective
+- **Pre-implementation** — Validate your plan before writing code
+- **Security concerns** — "Is this auth flow safe?"
+- **Code quality** — Get a second opinion on your implementation
 
-### When NOT to Use GPT Experts
+### When NOT to Use Experts
 
-- Simple file operations
-- First attempt at any fix
-- Trivial decisions
-- Research or documentation
+- Simple file operations (Claude handles these directly)
+- First attempt at any fix (try yourself first)
+- Trivial questions (no need to delegate)
 
 ---
 
 ## How It Works
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Claude Code                               │
-│                                                                  │
-│   User: "Is this authentication flow secure?"                   │
-│                                                                  │
-│   Claude: [Detects security question]                           │
-│           [Calls mcp__codex__codex with Security Analyst]       │
-│                                                                  │
-│           ┌──────────────────────────────────────┐              │
-│           │  MCP Server: codex                   │              │
-│           │  → Security Analyst expert           │              │
-│           │  → Returns vulnerability analysis    │              │
-│           └──────────────────────────────────────┘              │
-│                                                                  │
-│   Claude: "Based on the security analysis, I found..."          │
-└─────────────────────────────────────────────────────────────────┘
+You: "Is this authentication flow secure?"
+                    ↓
+Claude: [Detects security question → selects Security Analyst]
+                    ↓
+        ┌─────────────────────────────┐
+        │  mcp__codex__codex          │
+        │  → Security Analyst prompt  │
+        │  → GPT analyzes your code   │
+        └─────────────────────────────┘
+                    ↓
+Claude: "Based on the analysis, I found 3 issues..."
+        [Synthesizes response, applies judgment]
 ```
 
-### Plugin Structure
-
-```
-claude-delegator/
-├── rules/                    # Installed to ~/.claude/rules/delegator/
-│   ├── orchestration.md      # Delegation flow
-│   ├── triggers.md           # When to use each expert
-│   ├── model-selection.md    # Expert details
-│   └── delegation-format.md  # Prompt templates
-├── prompts/
-│   ├── architect.md          # System design expert
-│   ├── plan-reviewer.md      # Plan validation expert
-│   ├── scope-analyst.md      # Requirements expert
-│   ├── code-reviewer.md      # Code quality expert
-│   └── security-analyst.md   # Security expert
-├── commands/
-│   ├── setup.md              # /claude-delegator:setup
-│   └── configure.md          # /claude-delegator:configure
-└── config/
-    └── providers.json        # Provider configuration
-```
+**Key details:**
+- Each expert has a specialized system prompt (in `prompts/`)
+- Claude reads your request → picks the right expert → delegates via MCP
+- Responses are synthesized, not passed through raw
+- Experts can retry up to 3 times before escalating
 
 ---
 
 ## Configuration
 
-### Available Tools
-
-| Tool | Description |
-|------|-------------|
-| `mcp__codex__codex` | Start a conversation with a GPT expert |
-| `mcp__codex__codex-reply` | Continue an existing conversation |
-
-### Expert Prompts
-
-| Expert | Prompt File | Specialty |
-|--------|-------------|-----------|
-| Architect | `prompts/architect.md` | System design, tradeoffs |
-| Plan Reviewer | `prompts/plan-reviewer.md` | Plan validation |
-| Scope Analyst | `prompts/scope-analyst.md` | Requirements analysis |
-| Code Reviewer | `prompts/code-reviewer.md` | Code quality, bugs |
-| Security Analyst | `prompts/security-analyst.md` | Vulnerabilities, threats |
-
 ### Operating Modes
 
-Every expert supports two modes:
+Every expert supports two modes based on the task:
 
 | Mode | Sandbox | Use When |
 |------|---------|----------|
-| **Advisory** | `read-only` | Analysis, recommendations |
-| **Implementation** | `workspace-write` | Making changes |
+| **Advisory** | `read-only` | Analysis, recommendations, reviews |
+| **Implementation** | `workspace-write` | Making changes, fixing issues |
 
-### Example Call
-
-```typescript
-// Security Analyst in advisory mode
-mcp__codex__codex({
-  prompt: "Review this auth flow for vulnerabilities",
-  sandbox: "read-only",
-  "developer-instructions": "<security-analyst prompt>"
-})
-
-// Security Analyst in implementation mode
-mcp__codex__codex({
-  prompt: "Fix the SQL injection in user.ts",
-  sandbox: "workspace-write",
-  "developer-instructions": "<security-analyst prompt>"
-})
-```
+Claude automatically selects the mode based on your request.
 
 ### Manual MCP Setup
 
@@ -165,25 +117,28 @@ If `/setup` doesn't work, manually add to `~/.claude/settings.json`:
     "codex": {
       "type": "stdio",
       "command": "codex",
-      "args": ["mcp-server"]
+      "args": ["-m", "gpt-5.2-codex", "mcp-server"]
     }
   }
 }
 ```
 
+### Customizing Expert Prompts
+
+Expert prompts live in `prompts/`. Each follows the same structure:
+- Role definition and context
+- Advisory vs Implementation modes
+- Response format guidelines
+- When to invoke / when NOT to invoke
+
+Edit these to customize expert behavior for your workflow.
+
 ---
 
 ## Requirements
 
-| Dependency | Installation |
-|------------|--------------|
-| Codex CLI | `npm install -g @openai/codex` |
-
-### Authentication
-
-```bash
-codex login
-```
+- **Codex CLI**: `npm install -g @openai/codex`
+- **Authentication**: Run `codex login` after installation
 
 ---
 
@@ -191,20 +146,8 @@ codex login
 
 | Command | Description |
 |---------|-------------|
-| `/claude-delegator:setup` | Configure MCP server, install rules |
-| `/claude-delegator:configure` | Check status, test, or remove |
-
----
-
-## Testing
-
-Test the plugin locally with your working copy:
-
-```bash
-claude --plugin-dir /path/to/claude-delegator
-```
-
-This loads the plugin without reinstalling.
+| `/claude-delegator:setup` | Configure MCP server and install rules |
+| `/claude-delegator:uninstall` | Remove MCP config and rules |
 
 ---
 
@@ -215,6 +158,21 @@ This loads the plugin without reinstalling.
 | MCP server not found | Restart Claude Code after setup |
 | Codex not authenticated | Run `codex login` |
 | Tool not appearing | Check `~/.claude/settings.json` has codex entry |
+| Expert not triggered | Try explicit: "Ask GPT to review this architecture" |
+
+---
+
+## Development
+
+```bash
+git clone https://github.com/jarrodwatts/claude-delegator
+cd claude-delegator
+
+# Test locally without reinstalling
+claude --plugin-dir /path/to/claude-delegator
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ---
 
@@ -226,4 +184,10 @@ Expert prompts adapted from [oh-my-opencode](https://github.com/code-yeongyu/oh-
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT — see [LICENSE](LICENSE)
+
+---
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=jarrodwatts/claude-delegator&type=Date)](https://star-history.com/#jarrodwatts/claude-delegator&Date)

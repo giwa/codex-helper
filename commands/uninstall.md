@@ -1,13 +1,13 @@
 ---
-name: configure
+name: uninstall
 description: Uninstall claude-delegator (remove MCP config and rules)
 allowed-tools: Bash, Read, Write, Edit, AskUserQuestion
 timeout: 30000
 ---
 
-# Configure
+# Uninstall
 
-Uninstall claude-delegator from Claude Code.
+Remove claude-delegator from Claude Code.
 
 ## Confirm Removal
 
