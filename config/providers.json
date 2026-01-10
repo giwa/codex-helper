@@ -23,11 +23,11 @@
       "mcp": {
         "type": "stdio",
         "command": "npx",
-        "args": ["tsx", "${PLUGIN_ROOT}/servers/gemini-mcp/src/index.ts"],
+        "args": ["tsx", "${CLAUDE_PLUGIN_ROOT}/servers/gemini-mcp/src/index.ts"],
         "alternatives": {
           "bun": {
             "command": "bun",
-            "args": ["run", "${PLUGIN_ROOT}/servers/gemini-mcp/src/index.ts"]
+            "args": ["run", "${CLAUDE_PLUGIN_ROOT}/servers/gemini-mcp/src/index.ts"]
           }
         }
       },
