@@ -143,7 +143,25 @@ Examples:
 
 ## Testing
 
-No automated test suite. Manual testing:
+### Automated Tests
+
+The MCP server has comprehensive unit tests:
+
+```bash
+cd servers/gemini-mcp
+
+# Run tests
+npm test
+
+# Run with coverage
+npm run test:coverage
+```
+
+Coverage thresholds are configured at 95% for branches, functions, lines, and statements.
+
+### Manual Testing
+
+After code changes, also verify with actual MCP calls:
 
 1. Install the plugin in Claude Code
 2. Run `/claude-delegator:setup`
