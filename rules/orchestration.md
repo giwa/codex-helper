@@ -1,15 +1,13 @@
-# Multi-Model Orchestration
+# Model Orchestration
 
-You have access to external AI models via MCP tools. Use them autonomously based on these guidelines.
+You have access to GPT via MCP tools. Use it strategically based on these guidelines.
 
 ## Available Tools
 
 | Tool | Provider | Use For |
 |------|----------|---------|
-| `mcp__codex__codex` | GPT | Architecture, debugging, code review |
+| `mcp__codex__codex` | GPT | Architecture, debugging, code review, security |
 | `mcp__codex__codex-reply` | GPT | Continue GPT conversation |
-| `mcp__gemini__gemini` | Gemini | Research, docs, frontend, multimodal |
-| `mcp__gemini__gemini-reply` | Gemini | Continue Gemini conversation |
 
 ## Phase 0: Delegation Check (EVERY message)
 
@@ -17,13 +15,11 @@ Before classifying a request, check if delegation would help:
 
 | Signal | Action |
 |--------|--------|
-| External library/framework question | Delegate to Gemini (librarian role) |
 | Complex architecture decision | Delegate to GPT (oracle role) |
-| UI/UX implementation request | Delegate to Gemini (frontend-engineer role) |
 | 2+ failed fix attempts on same issue | Escalate to GPT for fresh perspective |
 | User explicitly asks for external opinion | Honor the request immediately |
-| Research-heavy task (docs, best practices) | Delegate to Gemini |
-| Security/performance analysis | Delegate to GPT |
+| Security/performance analysis | Delegate to GPT (oracle role) |
+| Work plan needs validation | Delegate to GPT (momus role) |
 
 ## Response Handling (MANDATORY)
 
@@ -79,20 +75,19 @@ When delegating, your prompt MUST include these 7 sections:
    - [What sections to include]
 ```
 
-## Parallel Consultation
+## Multi-Role Consultation
 
-For critical decisions, you MAY consult both models in parallel:
+For complex decisions, you MAY consult GPT with different roles:
 
 ```typescript
-// Call both simultaneously for important architectural decisions
-mcp__codex__codex({ prompt: "Analyze architecture tradeoffs..." })
-mcp__gemini__gemini({ prompt: "Research implementation patterns..." })
+// Oracle for architecture analysis
+mcp__codex__codex({ prompt: "[oracle role prompt] Analyze architecture tradeoffs..." })
+
+// Momus for plan validation
+mcp__codex__codex({ prompt: "[momus role prompt] Review this implementation plan..." })
 ```
 
-Then synthesize their recommendations into a unified approach:
-- GPT for architectural reasoning and tradeoffs
-- Gemini for implementation patterns and best practices
-- Your synthesis: combine both perspectives with your own judgment
+Synthesize recommendations with your own judgment - external models can be wrong.
 
 ## Escalation Pattern
 
@@ -108,9 +103,9 @@ After 2+ consecutive failures on the same issue:
 External model calls cost money. Use them strategically:
 
 - **Don't spam** - One well-structured delegation beats five vague ones
-- **GPT is expensive** - Reserve for architecture, security, complex debugging
-- **Gemini is cheaper** - Use freely for research, docs, frontend work
+- **Reserve for high-value tasks** - Architecture, security, complex debugging, plan validation
 - **Avoid redundant calls** - If you already have the answer, don't delegate
+- **Use reply tools** - Continue conversations with `codex-reply` instead of starting fresh
 
 ## Anti-Patterns
 
