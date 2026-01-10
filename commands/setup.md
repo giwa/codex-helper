@@ -45,11 +45,13 @@ Merge into `~/.claude/settings.json`:
     "codex": {
       "type": "stdio",
       "command": "codex",
-      "args": ["mcp-server"]
+      "args": ["-m", "gpt-5.2-codex", "mcp-server"]
     }
   }
 }
 ```
+
+Note: Uses `gpt-5.2-codex` explicitly for the latest model.
 
 **CRITICAL**:
 - Merge with existing settings, don't overwrite
