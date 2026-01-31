@@ -20,11 +20,11 @@ When a trigger matches:
 
 | Skill | Specialty | Use For |
 |-------|-----------|---------|
-| `/claude-delegator:architect` | System design, tradeoffs | Architecture decisions, complex debugging |
-| `/claude-delegator:plan-reviewer` | Plan validation | Reviewing work plans before execution |
-| `/claude-delegator:scope-analyst` | Pre-planning analysis | Catching ambiguities before work starts |
-| `/claude-delegator:code-reviewer` | Code quality, bugs | Reviewing code changes, finding issues |
-| `/claude-delegator:security-analyst` | Vulnerabilities, threats | Security audits, hardening |
+| `/codex-helper:architect` | System design, tradeoffs | Architecture decisions, complex debugging |
+| `/codex-helper:plan-reviewer` | Plan validation | Reviewing work plans before execution |
+| `/codex-helper:scope-analyst` | Pre-planning analysis | Catching ambiguities before work starts |
+| `/codex-helper:code-reviewer` | Code quality, bugs | Reviewing code changes, finding issues |
+| `/codex-helper:security-analyst` | Vulnerabilities, threats | Security audits, hardening |
 
 ## Explicit Triggers (Highest Priority)
 
@@ -33,15 +33,15 @@ User explicitly requests delegation:
 | Phrase Pattern | Skill |
 |----------------|-------|
 | "ask GPT", "consult GPT" | Route based on context |
-| "review this architecture" | `/claude-delegator:architect` |
-| "review this plan" | `/claude-delegator:plan-reviewer` |
-| "analyze the scope" | `/claude-delegator:scope-analyst` |
-| "review this code" | `/claude-delegator:code-reviewer` |
-| "security review", "is this secure" | `/claude-delegator:security-analyst` |
+| "review this architecture" | `/codex-helper:architect` |
+| "review this plan" | `/codex-helper:plan-reviewer` |
+| "analyze the scope" | `/codex-helper:scope-analyst` |
+| "review this code" | `/codex-helper:code-reviewer` |
+| "security review", "is this secure" | `/codex-helper:security-analyst` |
 
 ## Semantic Triggers (Intent Matching)
 
-### Architecture & Design (→ `/claude-delegator:architect`)
+### Architecture & Design (→ `/codex-helper:architect`)
 
 | Intent Pattern | Example |
 |----------------|---------|
@@ -51,7 +51,7 @@ User explicitly requests delegation:
 | System design questions | "Design a notification system" |
 | After 2+ failed fix attempts | Escalation for fresh perspective |
 
-### Plan Validation (→ `/claude-delegator:plan-reviewer`)
+### Plan Validation (→ `/codex-helper:plan-reviewer`)
 
 | Intent Pattern | Example |
 |----------------|---------|
@@ -60,7 +60,7 @@ User explicitly requests delegation:
 | "validate before I start" | "Validate my approach before starting" |
 | Before significant work | Pre-execution validation |
 
-### Requirements Analysis (→ `/claude-delegator:scope-analyst`)
+### Requirements Analysis (→ `/codex-helper:scope-analyst`)
 
 | Intent Pattern | Example |
 |----------------|---------|
@@ -69,7 +69,7 @@ User explicitly requests delegation:
 | Vague or ambiguous requests | Before planning unclear work |
 | "before we start" | Pre-planning consultation |
 
-### Code Review (→ `/claude-delegator:code-reviewer`)
+### Code Review (→ `/codex-helper:code-reviewer`)
 
 | Intent Pattern | Example |
 |----------------|---------|
@@ -78,7 +78,7 @@ User explicitly requests delegation:
 | "what's wrong with" | "What's wrong with this function?" |
 | After implementing features | Self-review before merge |
 
-### Security (→ `/claude-delegator:security-analyst`)
+### Security (→ `/codex-helper:security-analyst`)
 
 | Intent Pattern | Example |
 |----------------|---------|

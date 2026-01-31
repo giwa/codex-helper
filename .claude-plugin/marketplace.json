@@ -1,12 +1,12 @@
 {
-  "name": "jarrodwatts-claude-delegator",
+  "name": "jarrodwatts-codex-helper",
   "owner": {
     "name": "Jarrod Watts",
     "url": "https://github.com/jarrodwatts"
   },
   "plugins": [
     {
-      "name": "claude-delegator",
+      "name": "codex-helper",
       "source": "./",
       "description": "GPT expert subagents for Claude Code via Codex CLI. Five specialized experts: Architect, Plan Reviewer, Scope Analyst, Code Reviewer, Security Analyst.",
       "version": "1.0.0",
@@ -14,8 +14,8 @@
         "name": "Jarrod Watts",
         "url": "https://github.com/jarrodwatts"
       },
-      "homepage": "https://github.com/jarrodwatts/claude-delegator",
-      "repository": "https://github.com/jarrodwatts/claude-delegator",
+      "homepage": "https://github.com/jarrodwatts/codex-helper",
+      "repository": "https://github.com/jarrodwatts/codex-helper",
       "license": "MIT",
       "keywords": [
         "delegation",

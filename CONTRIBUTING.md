@@ -1,4 +1,4 @@
-# Contributing to claude-delegator
+# Contributing to codex-helper
 
 Contributions welcome. This document covers how to contribute effectively.
 
@@ -8,11 +8,11 @@ Contributions welcome. This document covers how to contribute effectively.
 
 ```bash
 # Clone the repo
-git clone https://github.com/jarrodwatts/claude-delegator
-cd claude-delegator
+git clone https://github.com/jarrodwatts/codex-helper
+cd codex-helper
 
 # Install plugin in Claude Code
-/claude-delegator:setup
+/codex-helper:setup
 
 # Test your changes by invoking the oracle
 ```
@@ -34,7 +34,7 @@ cd claude-delegator
 ## Project Structure
 
 ```
-claude-delegator/
+codex-helper/
 ├── .claude-plugin/         # Plugin manifest
 │   └── plugin.json
 ├── commands/               # Slash commands (/setup, /uninstall)
@@ -51,7 +51,7 @@ claude-delegator/
 
 ### Before Submitting
 
-1. **Test your changes** - Run `/claude-delegator:setup` and verify
+1. **Test your changes** - Run `/codex-helper:setup` and verify
 2. **Update docs** - If you change behavior, update relevant docs
 3. **Keep commits atomic** - One logical change per commit
 
@@ -140,7 +140,7 @@ Examples:
 After changes, verify with actual MCP calls:
 
 1. Install the plugin in Claude Code
-2. Run `/claude-delegator:setup`
+2. Run `/codex-helper:setup`
 3. Verify MCP tools are available (`mcp__codex__codex`)
 4. Test MCP tool calls via oracle delegation
 5. Verify responses are properly synthesized

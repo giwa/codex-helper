@@ -1,4 +1,4 @@
-# Claude Delegator
+# Codex Helper
 
 GPT expert subagents for Claude Code. Five specialists that can analyze AND implement—architecture, security, code review, and more.
 
@@ -7,9 +7,9 @@ GPT expert subagents for Claude Code. Five specialists that can analyze AND impl
 > - Skills invoke `codex exec` directly via Bash (no MCP server required)
 > - Simplified setup and configuration
 
-[![License](https://img.shields.io/github/license/jarrodwatts/claude-delegator?v=2)](LICENSE)
+[![License](https://img.shields.io/github/license/jarrodwatts/codex-helper?v=2)](LICENSE)
 
-![Claude Delegator in action](claude-delegator.png)
+![Codex Helper in action](codex-helper.png)
 
 ## Install
 
@@ -17,17 +17,17 @@ Inside a Claude Code instance, run the following commands:
 
 **Step 1: Add the marketplace**
 ```
-/plugin marketplace add jarrodwatts/claude-delegator
+/plugin marketplace add jarrodwatts/codex-helper
 ```
 
 **Step 2: Install the plugin**
 ```
-/plugin install claude-delegator
+/plugin install codex-helper
 ```
 
 **Step 3: Run setup**
 ```
-/claude-delegator:setup
+/codex-helper:setup
 ```
 
 Done! Claude now routes complex tasks to GPT experts automatically.
@@ -36,7 +36,7 @@ Done! Claude now routes complex tasks to GPT experts automatically.
 
 ---
 
-## What is Claude Delegator?
+## What is Codex Helper?
 
 Claude gains a team of GPT specialists via Claude Code skills. Each expert has a distinct specialty and can advise OR implement.
 
@@ -78,7 +78,7 @@ Claude gains a team of GPT specialists via Claude Code skills. Each expert has a
 ```
 You: "Is this authentication flow secure?"
                     ↓
-Claude: [Detects security question → invokes /claude-delegator:security-analyst]
+Claude: [Detects security question → invokes /codex-helper:security-analyst]
                     ↓
         ┌─────────────────────────────────────────┐
         │  Skill executes:                        │
@@ -135,13 +135,13 @@ Edit these to customize expert behavior for your workflow.
 
 | Skill | Description |
 |-------|-------------|
-| `/claude-delegator:setup` | Configure plugin and install rules |
-| `/claude-delegator:uninstall` | Remove plugin configuration |
-| `/claude-delegator:architect` | Delegate to GPT Architect expert |
-| `/claude-delegator:code-reviewer` | Delegate to GPT Code Reviewer expert |
-| `/claude-delegator:plan-reviewer` | Delegate to GPT Plan Reviewer expert |
-| `/claude-delegator:scope-analyst` | Delegate to GPT Scope Analyst expert |
-| `/claude-delegator:security-analyst` | Delegate to GPT Security Analyst expert |
+| `/codex-helper:setup` | Configure plugin and install rules |
+| `/codex-helper:uninstall` | Remove plugin configuration |
+| `/codex-helper:architect` | Delegate to GPT Architect expert |
+| `/codex-helper:code-reviewer` | Delegate to GPT Code Reviewer expert |
+| `/codex-helper:plan-reviewer` | Delegate to GPT Plan Reviewer expert |
+| `/codex-helper:scope-analyst` | Delegate to GPT Scope Analyst expert |
+| `/codex-helper:security-analyst` | Delegate to GPT Security Analyst expert |
 
 ---
 
@@ -150,7 +150,7 @@ Edit these to customize expert behavior for your workflow.
 | Issue | Solution |
 |-------|----------|
 | Codex not authenticated | Run `codex login` |
-| Skill not found | Reinstall plugin: `/plugin install claude-delegator` |
+| Skill not found | Reinstall plugin: `/plugin install codex-helper` |
 | Expert not triggered | Try explicit: "Ask GPT to review this architecture" |
 
 ---
@@ -158,11 +158,11 @@ Edit these to customize expert behavior for your workflow.
 ## Development
 
 ```bash
-git clone https://github.com/jarrodwatts/claude-delegator
-cd claude-delegator
+git clone https://github.com/jarrodwatts/codex-helper
+cd codex-helper
 
 # Test locally without reinstalling
-claude --plugin-dir /path/to/claude-delegator
+claude --plugin-dir /path/to/codex-helper
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.

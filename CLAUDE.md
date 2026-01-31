@@ -10,14 +10,14 @@ A Claude Code plugin that provides GPT (via Codex CLI) as specialized expert sub
 
 ```bash
 # Test plugin locally (loads from working directory)
-claude --plugin-dir /path/to/claude-delegator
+claude --plugin-dir /path/to/codex-helper
 
 # Test skills directly (namespaced)
-/claude-delegator:architect
-/claude-delegator:code-reviewer
-/claude-delegator:plan-reviewer
-/claude-delegator:scope-analyst
-/claude-delegator:security-analyst
+/codex-helper:architect
+/codex-helper:code-reviewer
+/codex-helper:plan-reviewer
+/codex-helper:scope-analyst
+/codex-helper:security-analyst
 ```
 
 No build step, no dependencies. Uses Codex CLI directly via skills.
@@ -52,7 +52,7 @@ User Request → Claude Code → [Match trigger → Select skill]
 ### How Delegation Works (Skill-based)
 
 1. **Match trigger** - Check `rules/triggers.md` for semantic patterns
-2. **Invoke skill** - Use `/claude-delegator:architect`, `/claude-delegator:code-reviewer`, etc.
+2. **Invoke skill** - Use `/codex-helper:architect`, `/codex-helper:code-reviewer`, etc.
 3. **Skill builds prompt** - 7-section format with expert personality
 4. **Execute `codex exec`** - Run via Bash with appropriate sandbox
 5. **Synthesize response** - Never show raw output; interpret and verify
@@ -81,7 +81,7 @@ Since each call is stateless, retries must include full history:
 
 | Component | Purpose | Notes |
 |-----------|---------|-------|
-| `skills/*/SKILL.md` | Skill definitions | Namespaced as `/claude-delegator:*` |
+| `skills/*/SKILL.md` | Skill definitions | Namespaced as `/codex-helper:*` |
 | `rules/*.md` | When/how to delegate | Reference for orchestration |
 | `prompts/*.md` | Expert personalities | Embedded in skills |
 | `config/providers.json` | Provider metadata | Reference only |
@@ -92,17 +92,17 @@ Since each call is stateless, retries must include full history:
 
 | Skill | File | Specialty | Triggers |
 |-------|------|-----------|----------|
-| `/claude-delegator:architect` | `skills/architect/SKILL.md` | System design, tradeoffs | "how should I structure", "tradeoffs of", design questions |
-| `/claude-delegator:plan-reviewer` | `skills/plan-reviewer/SKILL.md` | Plan validation | "review this plan", before significant work |
-| `/claude-delegator:scope-analyst` | `skills/scope-analyst/SKILL.md` | Requirements analysis | "clarify the scope", vague requirements |
-| `/claude-delegator:code-reviewer` | `skills/code-reviewer/SKILL.md` | Code quality, bugs | "review this code", "find issues" |
-| `/claude-delegator:security-analyst` | `skills/security-analyst/SKILL.md` | Vulnerabilities | "is this secure", "harden this" |
+| `/codex-helper:architect` | `skills/architect/SKILL.md` | System design, tradeoffs | "how should I structure", "tradeoffs of", design questions |
+| `/codex-helper:plan-reviewer` | `skills/plan-reviewer/SKILL.md` | Plan validation | "review this plan", before significant work |
+| `/codex-helper:scope-analyst` | `skills/scope-analyst/SKILL.md` | Requirements analysis | "clarify the scope", vague requirements |
+| `/codex-helper:code-reviewer` | `skills/code-reviewer/SKILL.md` | Code quality, bugs | "review this code", "find issues" |
+| `/codex-helper:security-analyst` | `skills/security-analyst/SKILL.md` | Vulnerabilities | "is this secure", "harden this" |
 
 Every expert can operate in **advisory** (`--sandbox read-only`) or **implementation** (`--sandbox workspace-write`) mode based on the task.
 
 ## Key Design Decisions
 
-1. **Namespaced skills** - All skills prefixed with `claude-delegator:` to avoid conflicts
+1. **Namespaced skills** - All skills prefixed with `codex-helper:` to avoid conflicts
 2. **Direct CLI execution** - Skills invoke `codex exec` directly via Bash
 3. **Stateless calls** - Each delegation includes full context
 4. **Dual mode** - Any expert can advise or implement based on task

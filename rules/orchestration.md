@@ -6,11 +6,11 @@ You have access to GPT experts via Claude Code skills. Use them strategically ba
 
 | Skill | Provider | Use For |
 |-------|----------|---------|
-| `/claude-delegator:architect` | GPT | System design, architecture decisions |
-| `/claude-delegator:code-reviewer` | GPT | Code quality, bugs, security review |
-| `/claude-delegator:plan-reviewer` | GPT | Plan validation before execution |
-| `/claude-delegator:scope-analyst` | GPT | Pre-planning, catching ambiguities |
-| `/claude-delegator:security-analyst` | GPT | Vulnerabilities, threat modeling |
+| `/codex-helper:architect` | GPT | System design, architecture decisions |
+| `/codex-helper:code-reviewer` | GPT | Code quality, bugs, security review |
+| `/codex-helper:plan-reviewer` | GPT | Plan validation before execution |
+| `/codex-helper:scope-analyst` | GPT | Pre-planning, catching ambiguities |
+| `/codex-helper:security-analyst` | GPT | Vulnerabilities, threat modeling |
 
 ## How Skills Execute Codex
 
@@ -43,12 +43,12 @@ Before handling any request, check if an expert would help:
 
 | Signal | Skill |
 |--------|-------|
-| Architecture/design decision | `/claude-delegator:architect` |
-| 2+ failed fix attempts on same issue | `/claude-delegator:architect` (fresh perspective) |
-| "Review this plan", "validate approach" | `/claude-delegator:plan-reviewer` |
-| Vague/ambiguous requirements | `/claude-delegator:scope-analyst` |
-| "Review this code", "find issues" | `/claude-delegator:code-reviewer` |
-| Security concerns, "is this secure" | `/claude-delegator:security-analyst` |
+| Architecture/design decision | `/codex-helper:architect` |
+| 2+ failed fix attempts on same issue | `/codex-helper:architect` (fresh perspective) |
+| "Review this plan", "validate approach" | `/codex-helper:plan-reviewer` |
+| Vague/ambiguous requirements | `/codex-helper:scope-analyst` |
+| "Review this code", "find issues" | `/codex-helper:code-reviewer` |
+| Security concerns, "is this secure" | `/codex-helper:security-analyst` |
 
 **If a signal matches → invoke the appropriate skill.**
 
@@ -61,9 +61,9 @@ When user explicitly requests GPT/Codex:
 | User Says | Action |
 |-----------|--------|
 | "ask GPT", "consult GPT", "ask codex" | Identify task type → route to appropriate skill |
-| "ask GPT to review the architecture" | Invoke `/claude-delegator:architect` |
-| "have GPT review this code" | Invoke `/claude-delegator:code-reviewer` |
-| "GPT security review" | Invoke `/claude-delegator:security-analyst` |
+| "ask GPT to review the architecture" | Invoke `/codex-helper:architect` |
+| "have GPT review this code" | Invoke `/codex-helper:code-reviewer` |
+| "GPT security review" | Invoke `/codex-helper:security-analyst` |
 
 **Always honor explicit requests.**
 
@@ -149,7 +149,7 @@ REQUIREMENTS:
 
 User: "What are the tradeoffs of Redis vs in-memory caching?"
 
-**Step 1**: Signal matches "Architecture decision" → `/claude-delegator:architect`
+**Step 1**: Signal matches "Architecture decision" → `/codex-helper:architect`
 
 **Step 2**: Advisory mode (question, not implementation) → `--sandbox read-only`
 
