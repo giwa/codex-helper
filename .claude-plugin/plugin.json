@@ -4,10 +4,10 @@
   "version": "1.0.0",
   "author": {
     "name": "Jarrod Watts",
-    "url": "https://github.com/jarrodwatts"
+    "url": "https://github.com/giwa"
   },
-  "homepage": "https://github.com/jarrodwatts/codex-helper",
-  "repository": "https://github.com/jarrodwatts/codex-helper",
+  "homepage": "https://github.com/giwa/codex-helper",
+  "repository": "https://github.com/giwa/codex-helper",
   "license": "MIT",
   "keywords": ["delegation", "codex", "gpt", "openai", "experts", "subagents", "orchestration", "skills"]
 }

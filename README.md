@@ -2,12 +2,12 @@
 
 GPT expert subagents for Claude Code. Five specialists that can analyze AND implement—architecture, security, code review, and more.
 
-> **Fork Note**: This is an improved fork of [jarrodwatts/claude-delegator](https://github.com/jarrodwatts/claude-delegator). Key changes:
+> **Fork Note**: This is an improved fork of [giwa/claude-delegator](https://github.com/giwa/claude-delegator). Key changes:
 > - Replaced MCP-based delegation with native Claude Code skills
 > - Skills invoke `codex exec` directly via Bash (no MCP server required)
 > - Simplified setup and configuration
 
-[![License](https://img.shields.io/github/license/jarrodwatts/codex-helper?v=2)](LICENSE)
+[![License](https://img.shields.io/github/license/giwa/codex-helper?v=2)](LICENSE)
 
 ![Codex Helper in action](codex-helper.png)
 
@@ -17,7 +17,7 @@ Inside a Claude Code instance, run the following commands:
 
 **Step 1: Add the marketplace**
 ```
-/plugin marketplace add jarrodwatts/codex-helper
+/plugin marketplace add giwa/codex-helper
 ```
 
 **Step 2: Install the plugin**
@@ -158,7 +158,7 @@ Edit these to customize expert behavior for your workflow.
 ## Development
 
 ```bash
-git clone https://github.com/jarrodwatts/codex-helper
+git clone https://github.com/giwa/codex-helper
 cd codex-helper
 
 # Test locally without reinstalling
@@ -171,7 +171,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## Acknowledgments
 
-- Original plugin by [@jarrodwatts](https://github.com/jarrodwatts): [claude-delegator](https://github.com/jarrodwatts/claude-delegator)
+- Original plugin by [@giwa](https://github.com/giwa): [claude-delegator](https://github.com/giwa/claude-delegator)
 - Expert prompts adapted from [oh-my-opencode](https://github.com/code-yeongyu/oh-my-opencode) by [@code-yeongyu](https://github.com/code-yeongyu)
 
 ---

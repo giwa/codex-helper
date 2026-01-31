@@ -8,7 +8,7 @@ Contributions welcome. This document covers how to contribute effectively.
 
 ```bash
 # Clone the repo
-git clone https://github.com/jarrodwatts/codex-helper
+git clone https://github.com/giwa/codex-helper
 cd codex-helper
 
 # Install plugin in Claude Code
