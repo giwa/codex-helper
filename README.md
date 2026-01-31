@@ -2,8 +2,12 @@
 
 GPT expert subagents for Claude Code. Five specialists that can analyze AND implement—architecture, security, code review, and more.
 
+> **Fork Note**: This is an improved fork of [jarrodwatts/claude-delegator](https://github.com/jarrodwatts/claude-delegator). Key changes:
+> - Replaced MCP-based delegation with native Claude Code skills
+> - Skills invoke `codex exec` directly via Bash (no MCP server required)
+> - Simplified setup and configuration
+
 [![License](https://img.shields.io/github/license/jarrodwatts/claude-delegator?v=2)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/jarrodwatts/claude-delegator?v=2)](https://github.com/jarrodwatts/claude-delegator/stargazers)
 
 ![Claude Delegator in action](claude-delegator.png)
 
@@ -34,7 +38,7 @@ Done! Claude now routes complex tasks to GPT experts automatically.
 
 ## What is Claude Delegator?
 
-Claude gains a team of GPT specialists via native MCP. Each expert has a distinct specialty and can advise OR implement.
+Claude gains a team of GPT specialists via Claude Code skills. Each expert has a distinct specialty and can advise OR implement.
 
 | What You Get | Why It Matters |
 |--------------|----------------|
@@ -74,13 +78,14 @@ Claude gains a team of GPT specialists via native MCP. Each expert has a distinc
 ```
 You: "Is this authentication flow secure?"
                     ↓
-Claude: [Detects security question → selects Security Analyst]
+Claude: [Detects security question → invokes /claude-delegator:security-analyst]
                     ↓
-        ┌─────────────────────────────┐
-        │  mcp__codex__codex          │
-        │  → Security Analyst prompt  │
-        │  → GPT analyzes your code   │
-        └─────────────────────────────┘
+        ┌─────────────────────────────────────────┐
+        │  Skill executes:                        │
+        │  codex exec --sandbox read-only ...     │
+        │  → Security Analyst prompt              │
+        │  → GPT analyzes your code               │
+        └─────────────────────────────────────────┘
                     ↓
 Claude: "Based on the analysis, I found 3 issues..."
         [Synthesizes response, applies judgment]
@@ -88,7 +93,7 @@ Claude: "Based on the analysis, I found 3 issues..."
 
 **Key details:**
 - Each expert has a specialized system prompt (in `prompts/`)
-- Claude reads your request → picks the right expert → delegates via MCP
+- Claude reads your request → picks the right expert → invokes skill → executes `codex exec`
 - Responses are synthesized, not passed through raw
 - Experts can retry up to 3 times before escalating
 
@@ -106,22 +111,6 @@ Every expert supports two modes based on the task:
 | **Implementation** | `workspace-write` | Making changes, fixing issues |
 
 Claude automatically selects the mode based on your request.
-
-### Manual MCP Setup
-
-If `/setup` doesn't work, manually add to `~/.claude/settings.json`:
-
-```json
-{
-  "mcpServers": {
-    "codex": {
-      "type": "stdio",
-      "command": "codex",
-      "args": ["-m", "gpt-5.2-codex", "mcp-server"]
-    }
-  }
-}
-```
 
 ### Customizing Expert Prompts
 
@@ -142,12 +131,17 @@ Edit these to customize expert behavior for your workflow.
 
 ---
 
-## Commands
+## Available Skills
 
-| Command | Description |
-|---------|-------------|
-| `/claude-delegator:setup` | Configure MCP server and install rules |
-| `/claude-delegator:uninstall` | Remove MCP config and rules |
+| Skill | Description |
+|-------|-------------|
+| `/claude-delegator:setup` | Configure plugin and install rules |
+| `/claude-delegator:uninstall` | Remove plugin configuration |
+| `/claude-delegator:architect` | Delegate to GPT Architect expert |
+| `/claude-delegator:code-reviewer` | Delegate to GPT Code Reviewer expert |
+| `/claude-delegator:plan-reviewer` | Delegate to GPT Plan Reviewer expert |
+| `/claude-delegator:scope-analyst` | Delegate to GPT Scope Analyst expert |
+| `/claude-delegator:security-analyst` | Delegate to GPT Security Analyst expert |
 
 ---
 
@@ -155,9 +149,8 @@ Edit these to customize expert behavior for your workflow.
 
 | Issue | Solution |
 |-------|----------|
-| MCP server not found | Restart Claude Code after setup |
 | Codex not authenticated | Run `codex login` |
-| Tool not appearing | Check `~/.claude/settings.json` has codex entry |
+| Skill not found | Reinstall plugin: `/plugin install claude-delegator` |
 | Expert not triggered | Try explicit: "Ask GPT to review this architecture" |
 
 ---
@@ -178,7 +171,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## Acknowledgments
 
-Expert prompts adapted from [oh-my-opencode](https://github.com/code-yeongyu/oh-my-opencode) by [@code-yeongyu](https://github.com/code-yeongyu).
+- Original plugin by [@jarrodwatts](https://github.com/jarrodwatts): [claude-delegator](https://github.com/jarrodwatts/claude-delegator)
+- Expert prompts adapted from [oh-my-opencode](https://github.com/code-yeongyu/oh-my-opencode) by [@code-yeongyu](https://github.com/code-yeongyu)
 
 ---
 
@@ -188,6 +182,3 @@ MIT — see [LICENSE](LICENSE)
 
 ---
 
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=jarrodwatts/claude-delegator&type=Date&v=2)](https://star-history.com/#jarrodwatts/claude-delegator&Date)

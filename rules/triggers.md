@@ -1,6 +1,6 @@
 # Delegation Triggers
 
-This file defines when to delegate to GPT experts via Codex.
+This file defines when to delegate to GPT experts via Codex skills.
 
 ## IMPORTANT: Check These Triggers on EVERY Message
 
@@ -11,38 +11,37 @@ You MUST scan incoming messages for delegation triggers. This is NOT optional.
 2. **REACTIVE**: If user explicitly mentions GPT/Codex → delegate immediately
 
 When a trigger matches:
-1. Identify the appropriate expert
-2. Read their prompt file from `${CLAUDE_PLUGIN_ROOT}/prompts/[expert].md`
-3. Follow the delegation flow in `rules/orchestration.md`
+1. Identify the appropriate skill
+2. Follow the delegation flow in `rules/orchestration.md`
 
 ---
 
-## Available Experts
+## Available Expert Skills
 
-| Expert | Specialty | Use For |
-|--------|-----------|---------|
-| **Architect** | System design, tradeoffs | Architecture decisions, complex debugging |
-| **Plan Reviewer** | Plan validation | Reviewing work plans before execution |
-| **Scope Analyst** | Pre-planning analysis | Catching ambiguities before work starts |
-| **Code Reviewer** | Code quality, bugs | Reviewing code changes, finding issues |
-| **Security Analyst** | Vulnerabilities, threats | Security audits, hardening |
+| Skill | Specialty | Use For |
+|-------|-----------|---------|
+| `/claude-delegator:architect` | System design, tradeoffs | Architecture decisions, complex debugging |
+| `/claude-delegator:plan-reviewer` | Plan validation | Reviewing work plans before execution |
+| `/claude-delegator:scope-analyst` | Pre-planning analysis | Catching ambiguities before work starts |
+| `/claude-delegator:code-reviewer` | Code quality, bugs | Reviewing code changes, finding issues |
+| `/claude-delegator:security-analyst` | Vulnerabilities, threats | Security audits, hardening |
 
 ## Explicit Triggers (Highest Priority)
 
 User explicitly requests delegation:
 
-| Phrase Pattern | Expert |
-|----------------|--------|
+| Phrase Pattern | Skill |
+|----------------|-------|
 | "ask GPT", "consult GPT" | Route based on context |
-| "review this architecture" | Architect |
-| "review this plan" | Plan Reviewer |
-| "analyze the scope" | Scope Analyst |
-| "review this code" | Code Reviewer |
-| "security review", "is this secure" | Security Analyst |
+| "review this architecture" | `/claude-delegator:architect` |
+| "review this plan" | `/claude-delegator:plan-reviewer` |
+| "analyze the scope" | `/claude-delegator:scope-analyst` |
+| "review this code" | `/claude-delegator:code-reviewer` |
+| "security review", "is this secure" | `/claude-delegator:security-analyst` |
 
 ## Semantic Triggers (Intent Matching)
 
-### Architecture & Design (→ Architect)
+### Architecture & Design (→ `/claude-delegator:architect`)
 
 | Intent Pattern | Example |
 |----------------|---------|
@@ -52,7 +51,7 @@ User explicitly requests delegation:
 | System design questions | "Design a notification system" |
 | After 2+ failed fix attempts | Escalation for fresh perspective |
 
-### Plan Validation (→ Plan Reviewer)
+### Plan Validation (→ `/claude-delegator:plan-reviewer`)
 
 | Intent Pattern | Example |
 |----------------|---------|
@@ -61,7 +60,7 @@ User explicitly requests delegation:
 | "validate before I start" | "Validate my approach before starting" |
 | Before significant work | Pre-execution validation |
 
-### Requirements Analysis (→ Scope Analyst)
+### Requirements Analysis (→ `/claude-delegator:scope-analyst`)
 
 | Intent Pattern | Example |
 |----------------|---------|
@@ -70,7 +69,7 @@ User explicitly requests delegation:
 | Vague or ambiguous requests | Before planning unclear work |
 | "before we start" | Pre-planning consultation |
 
-### Code Review (→ Code Reviewer)
+### Code Review (→ `/claude-delegator:code-reviewer`)
 
 | Intent Pattern | Example |
 |----------------|---------|
@@ -79,7 +78,7 @@ User explicitly requests delegation:
 | "what's wrong with" | "What's wrong with this function?" |
 | After implementing features | Self-review before merge |
 
-### Security (→ Security Analyst)
+### Security (→ `/claude-delegator:security-analyst`)
 
 | Intent Pattern | Example |
 |----------------|---------|
@@ -111,37 +110,37 @@ User explicitly requests delegation:
 
 Any expert can operate in two modes:
 
-| Mode | Sandbox | When to Use |
-|------|---------|-------------|
-| **Advisory** | `read-only` | Analysis, recommendations, review verdicts |
-| **Implementation** | `workspace-write` | Actually making changes, fixing issues |
+| Mode | Sandbox Flag | When to Use |
+|------|--------------|-------------|
+| **Advisory** | `--sandbox read-only` | Analysis, recommendations, review verdicts |
+| **Implementation** | `--sandbox workspace-write` | Actually making changes, fixing issues |
 
 Set the sandbox based on what the task requires, not the expert type.
 
 **Examples:**
 
-```typescript
-// Architect analyzing (advisory)
-mcp__codex__codex({
-  prompt: "Analyze tradeoffs of Redis vs in-memory caching",
-  sandbox: "read-only"
-})
+```bash
+# Architect analyzing (advisory)
+codex exec --full-auto --sandbox read-only --cd /path/to/project "
+EXPERT: Architect
+TASK: Analyze tradeoffs of Redis vs in-memory caching
+..."
 
-// Architect implementing (implementation)
-mcp__codex__codex({
-  prompt: "Refactor the caching layer to use Redis",
-  sandbox: "workspace-write"
-})
+# Architect implementing (implementation)
+codex exec --full-auto --sandbox workspace-write --cd /path/to/project "
+EXPERT: Architect
+TASK: Refactor the caching layer to use Redis
+..."
 
-// Security Analyst reviewing (advisory)
-mcp__codex__codex({
-  prompt: "Review this auth flow for vulnerabilities",
-  sandbox: "read-only"
-})
+# Security Analyst reviewing (advisory)
+codex exec --full-auto --sandbox read-only --cd /path/to/project "
+EXPERT: Security Analyst
+TASK: Review this auth flow for vulnerabilities
+..."
 
-// Security Analyst hardening (implementation)
-mcp__codex__codex({
-  prompt: "Fix the SQL injection vulnerability in user.ts",
-  sandbox: "workspace-write"
-})
+# Security Analyst hardening (implementation)
+codex exec --full-auto --sandbox workspace-write --cd /path/to/project "
+EXPERT: Security Analyst
+TASK: Fix the SQL injection vulnerability in user.ts
+..."
 ```

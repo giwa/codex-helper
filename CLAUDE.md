@@ -12,40 +12,60 @@ A Claude Code plugin that provides GPT (via Codex CLI) as specialized expert sub
 # Test plugin locally (loads from working directory)
 claude --plugin-dir /path/to/claude-delegator
 
-# Run setup to test installation flow
-/claude-delegator:setup
-
-# Run uninstall to test removal flow
-/claude-delegator:uninstall
+# Test skills directly (namespaced)
+/claude-delegator:architect
+/claude-delegator:code-reviewer
+/claude-delegator:plan-reviewer
+/claude-delegator:scope-analyst
+/claude-delegator:security-analyst
 ```
 
-No build step, no dependencies. Uses Codex CLI's native MCP server.
+No build step, no dependencies. Uses Codex CLI directly via skills.
+
+## Prerequisites
+
+Codex CLI must be installed and authenticated:
+
+```bash
+npm install -g @openai/codex
+codex auth
+```
 
 ## Architecture
 
-### Orchestration Flow
+### Orchestration Flow (Skill-based)
 
-Claude acts as orchestrator—delegates to specialized GPT experts based on task type. Delegation is **stateless**: each `mcp__codex__codex` call is independent (no memory between calls).
+Claude acts as orchestrator—delegates to specialized GPT experts based on task type. Each skill invokes `codex exec` directly.
 
 ```
-User Request → Claude Code → [Match trigger → Select expert]
+User Request → Claude Code → [Match trigger → Select skill]
                                     ↓
               ┌─────────────────────┼─────────────────────┐
               ↓                     ↓                     ↓
-         Architect            Code Reviewer        Security Analyst
+    :architect            :code-reviewer        :security-analyst
               ↓                     ↓                     ↓
-    [Advisory (read-only) OR Implementation (workspace-write)]
+    codex exec --sandbox [read-only | workspace-write]
               ↓                     ↓                     ↓
     Claude synthesizes response ←──┴──────────────────────┘
 ```
 
-### How Delegation Works
+### How Delegation Works (Skill-based)
 
 1. **Match trigger** - Check `rules/triggers.md` for semantic patterns
-2. **Read expert prompt** - Load from `prompts/[expert].md`
-3. **Build 7-section prompt** - Use format from `rules/delegation-format.md`
-4. **Call `mcp__codex__codex`** - Pass expert prompt via `developer-instructions`
+2. **Invoke skill** - Use `/claude-delegator:architect`, `/claude-delegator:code-reviewer`, etc.
+3. **Skill builds prompt** - 7-section format with expert personality
+4. **Execute `codex exec`** - Run via Bash with appropriate sandbox
 5. **Synthesize response** - Never show raw output; interpret and verify
+
+### Codex CLI Commands
+
+```bash
+# Advisory mode (read-only analysis)
+codex exec --full-auto --sandbox read-only --cd <dir> "<prompt>"
+
+# Implementation mode (can modify files)
+codex exec --full-auto --sandbox workspace-write --cd <dir> "<prompt>"
+```
 
 ### The 7-Section Delegation Format
 
@@ -61,32 +81,33 @@ Since each call is stateless, retries must include full history:
 
 | Component | Purpose | Notes |
 |-----------|---------|-------|
-| `rules/*.md` | When/how to delegate | Installed to `~/.claude/rules/delegator/` |
-| `prompts/*.md` | Expert personalities | Injected via `developer-instructions` |
-| `commands/*.md` | Slash commands | `/setup`, `/uninstall` |
-| `config/providers.json` | Provider metadata | Not used at runtime |
+| `skills/*/SKILL.md` | Skill definitions | Namespaced as `/claude-delegator:*` |
+| `rules/*.md` | When/how to delegate | Reference for orchestration |
+| `prompts/*.md` | Expert personalities | Embedded in skills |
+| `config/providers.json` | Provider metadata | Reference only |
 
 > Expert prompts adapted from [oh-my-opencode](https://github.com/code-yeongyu/oh-my-opencode)
 
-## Five GPT Experts
+## Five GPT Expert Skills
 
-| Expert | Prompt | Specialty | Triggers |
-|--------|--------|-----------|----------|
-| **Architect** | `prompts/architect.md` | System design, tradeoffs | "how should I structure", "tradeoffs of", design questions |
-| **Plan Reviewer** | `prompts/plan-reviewer.md` | Plan validation | "review this plan", before significant work |
-| **Scope Analyst** | `prompts/scope-analyst.md` | Requirements analysis | "clarify the scope", vague requirements |
-| **Code Reviewer** | `prompts/code-reviewer.md` | Code quality, bugs | "review this code", "find issues" |
-| **Security Analyst** | `prompts/security-analyst.md` | Vulnerabilities | "is this secure", "harden this" |
+| Skill | File | Specialty | Triggers |
+|-------|------|-----------|----------|
+| `/claude-delegator:architect` | `skills/architect/SKILL.md` | System design, tradeoffs | "how should I structure", "tradeoffs of", design questions |
+| `/claude-delegator:plan-reviewer` | `skills/plan-reviewer/SKILL.md` | Plan validation | "review this plan", before significant work |
+| `/claude-delegator:scope-analyst` | `skills/scope-analyst/SKILL.md` | Requirements analysis | "clarify the scope", vague requirements |
+| `/claude-delegator:code-reviewer` | `skills/code-reviewer/SKILL.md` | Code quality, bugs | "review this code", "find issues" |
+| `/claude-delegator:security-analyst` | `skills/security-analyst/SKILL.md` | Vulnerabilities | "is this secure", "harden this" |
 
-Every expert can operate in **advisory** (`sandbox: read-only`) or **implementation** (`sandbox: workspace-write`) mode based on the task.
+Every expert can operate in **advisory** (`--sandbox read-only`) or **implementation** (`--sandbox workspace-write`) mode based on the task.
 
 ## Key Design Decisions
 
-1. **Native MCP only** - Codex has `codex mcp-server`, no wrapper needed
-2. **Stateless calls** - Each delegation includes full context (Codex MCP doesn't expose session IDs to Claude Code)
-3. **Dual mode** - Any expert can advise or implement based on task
-4. **Synthesize, don't passthrough** - Claude interprets GPT output, applies judgment
-5. **Proactive triggers** - Claude checks for delegation triggers on every message
+1. **Namespaced skills** - All skills prefixed with `claude-delegator:` to avoid conflicts
+2. **Direct CLI execution** - Skills invoke `codex exec` directly via Bash
+3. **Stateless calls** - Each delegation includes full context
+4. **Dual mode** - Any expert can advise or implement based on task
+5. **Synthesize, don't passthrough** - Claude interprets GPT output, applies judgment
+6. **Proactive triggers** - Claude checks for delegation triggers on every message
 
 ## When NOT to Delegate
 

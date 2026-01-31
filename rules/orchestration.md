@@ -1,24 +1,28 @@
-# Model Orchestration
+# Model Orchestration (Skill-based)
 
-You have access to GPT experts via MCP tools. Use them strategically based on these guidelines.
+You have access to GPT experts via Claude Code skills. Use them strategically based on these guidelines.
 
-## Available Tools
+## Available Skills
 
-| Tool | Provider | Use For |
-|------|----------|---------|
-| `mcp__codex__codex` | GPT | Delegate to an expert (stateless) |
+| Skill | Provider | Use For |
+|-------|----------|---------|
+| `/claude-delegator:architect` | GPT | System design, architecture decisions |
+| `/claude-delegator:code-reviewer` | GPT | Code quality, bugs, security review |
+| `/claude-delegator:plan-reviewer` | GPT | Plan validation before execution |
+| `/claude-delegator:scope-analyst` | GPT | Pre-planning, catching ambiguities |
+| `/claude-delegator:security-analyst` | GPT | Vulnerabilities, threat modeling |
 
-> **Note:** `codex-reply` exists but requires a session ID not currently exposed to Claude Code. Each delegation is independent—include full context in every call.
+## How Skills Execute Codex
 
-## Available Experts
+Each skill runs `codex exec` via Bash:
 
-| Expert | Specialty | Prompt File |
-|--------|-----------|-------------|
-| **Architect** | System design, tradeoffs, complex debugging | `${CLAUDE_PLUGIN_ROOT}/prompts/architect.md` |
-| **Plan Reviewer** | Plan validation before execution | `${CLAUDE_PLUGIN_ROOT}/prompts/plan-reviewer.md` |
-| **Scope Analyst** | Pre-planning, catching ambiguities | `${CLAUDE_PLUGIN_ROOT}/prompts/scope-analyst.md` |
-| **Code Reviewer** | Code quality, bugs, security issues | `${CLAUDE_PLUGIN_ROOT}/prompts/code-reviewer.md` |
-| **Security Analyst** | Vulnerabilities, threat modeling | `${CLAUDE_PLUGIN_ROOT}/prompts/security-analyst.md` |
+```bash
+# Advisory mode (read-only)
+codex exec --full-auto --sandbox read-only --cd <project_dir> "<prompt>"
+
+# Implementation mode (can modify files)
+codex exec --full-auto --sandbox workspace-write --cd <project_dir> "<prompt>"
+```
 
 ---
 
@@ -31,24 +35,22 @@ You have access to GPT experts via MCP tools. Use them strategically based on th
 - For retries, include what was attempted and what failed
 - Don't assume the expert remembers previous interactions
 
-**Why:** Codex MCP returns session IDs in event notifications, but Claude Code only surfaces the final text response. Until this changes, treat each call as fresh.
-
 ---
 
 ## PROACTIVE Delegation (Check on EVERY message)
 
 Before handling any request, check if an expert would help:
 
-| Signal | Expert |
-|--------|--------|
-| Architecture/design decision | Architect |
-| 2+ failed fix attempts on same issue | Architect (fresh perspective) |
-| "Review this plan", "validate approach" | Plan Reviewer |
-| Vague/ambiguous requirements | Scope Analyst |
-| "Review this code", "find issues" | Code Reviewer |
-| Security concerns, "is this secure" | Security Analyst |
+| Signal | Skill |
+|--------|-------|
+| Architecture/design decision | `/claude-delegator:architect` |
+| 2+ failed fix attempts on same issue | `/claude-delegator:architect` (fresh perspective) |
+| "Review this plan", "validate approach" | `/claude-delegator:plan-reviewer` |
+| Vague/ambiguous requirements | `/claude-delegator:scope-analyst` |
+| "Review this code", "find issues" | `/claude-delegator:code-reviewer` |
+| Security concerns, "is this secure" | `/claude-delegator:security-analyst` |
 
-**If a signal matches → delegate to the appropriate expert.**
+**If a signal matches → invoke the appropriate skill.**
 
 ---
 
@@ -58,10 +60,10 @@ When user explicitly requests GPT/Codex:
 
 | User Says | Action |
 |-----------|--------|
-| "ask GPT", "consult GPT", "ask codex" | Identify task type → route to appropriate expert |
-| "ask GPT to review the architecture" | Delegate to Architect |
-| "have GPT review this code" | Delegate to Code Reviewer |
-| "GPT security review" | Delegate to Security Analyst |
+| "ask GPT", "consult GPT", "ask codex" | Identify task type → route to appropriate skill |
+| "ask GPT to review the architecture" | Invoke `/claude-delegator:architect` |
+| "have GPT review this code" | Invoke `/claude-delegator:code-reviewer` |
+| "GPT security review" | Invoke `/claude-delegator:security-analyst` |
 
 **Always honor explicit requests.**
 
@@ -72,30 +74,21 @@ When user explicitly requests GPT/Codex:
 When delegation is triggered:
 
 ### Step 1: Identify Expert
-Match the task to the appropriate expert based on triggers.
+Match the task to the appropriate skill based on triggers.
 
-### Step 2: Read Expert Prompt
-**CRITICAL**: Read the expert's prompt file to get their system instructions:
+### Step 2: Determine Mode
+| Task Type | Mode | Sandbox Flag |
+|-----------|------|--------------|
+| Analysis, review, recommendations | Advisory | `--sandbox read-only` |
+| Make changes, fix issues, implement | Implementation | `--sandbox workspace-write` |
 
-```
-Read ${CLAUDE_PLUGIN_ROOT}/prompts/[expert].md
-```
-
-For example, for Architect: `Read ${CLAUDE_PLUGIN_ROOT}/prompts/architect.md`
-
-### Step 3: Determine Mode
-| Task Type | Mode | Sandbox |
-|-----------|------|---------|
-| Analysis, review, recommendations | Advisory | `read-only` |
-| Make changes, fix issues, implement | Implementation | `workspace-write` |
-
-### Step 4: Notify User
+### Step 3: Notify User
 Always inform the user before delegating:
 ```
 Delegating to [Expert Name]: [brief task summary]
 ```
 
-### Step 5: Build Delegation Prompt
+### Step 4: Build Delegation Prompt
 Use the 7-section format from `rules/delegation-format.md`.
 
 **IMPORTANT:** Since each call is stateless, include FULL context:
@@ -103,17 +96,12 @@ Use the 7-section format from `rules/delegation-format.md`.
 - Relevant code/files
 - Any previous attempts and their results (for retries)
 
-### Step 6: Call the Expert
-```typescript
-mcp__codex__codex({
-  prompt: "[your 7-section delegation prompt with FULL context]",
-  "developer-instructions": "[contents of the expert's prompt file]",
-  sandbox: "[read-only or workspace-write based on mode]",
-  cwd: "[current working directory]"
-})
+### Step 5: Execute Codex
+```bash
+codex exec --full-auto --sandbox [read-only|workspace-write] --cd "<project_dir>" "<delegation_prompt>"
 ```
 
-### Step 7: Handle Response
+### Step 6: Handle Response
 1. **Synthesize** - Never show raw output directly
 2. **Extract insights** - Key recommendations, issues, changes
 3. **Apply judgment** - Experts can be wrong; evaluate critically
@@ -161,27 +149,40 @@ REQUIREMENTS:
 
 User: "What are the tradeoffs of Redis vs in-memory caching?"
 
-**Step 1**: Signal matches "Architecture decision" → Architect
+**Step 1**: Signal matches "Architecture decision" → `/claude-delegator:architect`
 
-**Step 2**: Read `${CLAUDE_PLUGIN_ROOT}/prompts/architect.md`
+**Step 2**: Advisory mode (question, not implementation) → `--sandbox read-only`
 
-**Step 3**: Advisory mode (question, not implementation) → `read-only`
+**Step 3**: "Delegating to Architect: Analyze caching tradeoffs"
 
-**Step 4**: "Delegating to Architect: Analyze caching tradeoffs"
+**Step 4-5**:
+```bash
+codex exec --full-auto --sandbox read-only --cd "/path/to/project" "
+EXPERT: Architect
 
-**Step 5-6**:
-```typescript
-mcp__codex__codex({
-  prompt: `TASK: Analyze tradeoffs between Redis and in-memory caching for [context].
+TASK: Analyze tradeoffs between Redis and in-memory caching for [context].
+
 EXPECTED OUTCOME: Clear recommendation with rationale.
+
+MODE: Advisory
+
 CONTEXT: [user's situation, full details]
-...`,
-  "developer-instructions": "[contents of architect.md]",
-  sandbox: "read-only"
-})
+
+CONSTRAINTS: [technical requirements]
+
+MUST DO:
+- Compare both approaches for our scale
+- Provide effort estimate
+
+MUST NOT DO:
+- Over-engineer for hypothetical needs
+
+OUTPUT FORMAT:
+Bottom line → Action plan → Effort estimate
+"
 ```
 
-**Step 7**: Synthesize response, add your assessment.
+**Step 6**: Synthesize response, add your assessment.
 
 ---
 
@@ -190,9 +191,11 @@ CONTEXT: [user's situation, full details]
 First attempt failed with "TypeError: Cannot read property 'x' of undefined"
 
 **Retry call:**
-```typescript
-mcp__codex__codex({
-  prompt: `TASK: Add input validation to the user registration endpoint.
+```bash
+codex exec --full-auto --sandbox workspace-write --cd "/path/to/project" "
+EXPERT: Code Reviewer
+
+TASK: Add input validation to the user registration endpoint.
 
 PREVIOUS ATTEMPT:
 - Added validation middleware to routes/auth.ts
@@ -207,11 +210,11 @@ CONTEXT:
 REQUIREMENTS:
 - Fix the undefined req.body issue
 - Ensure validation runs after body parser
-- Report all files modified`,
-  "developer-instructions": "[contents of code-reviewer.md or architect.md]",
-  sandbox: "workspace-write",
-  cwd: "/path/to/project"
-})
+- Report all files modified
+
+OUTPUT FORMAT:
+Summary → Issues fixed → Files modified → Verification
+"
 ```
 
 ---
@@ -230,7 +233,6 @@ REQUIREMENTS:
 |---------------|-----------------|
 | Delegate trivial questions | Answer directly |
 | Show raw expert output | Synthesize and interpret |
-| Delegate without reading prompt file | ALWAYS read and inject expert prompt |
 | Skip user notification | ALWAYS notify before delegating |
 | Retry without including error context | Include FULL history of what was tried |
 | Assume expert remembers previous calls | Include all context in every call |
